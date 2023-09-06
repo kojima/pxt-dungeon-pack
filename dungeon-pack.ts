@@ -5,6 +5,13 @@
 namespace dungeon_pack {
     const stateNamespace = "__dungeon_pack";
 
+    enum SpriteDirection {
+        UP,
+        RIGHT,
+        DOWN,
+        LEFT
+    }
+
     type SpriteMoveAnimationData = {
         elaspedTime: number,
         frameInterval: number,
@@ -23,6 +30,23 @@ namespace dungeon_pack {
         leftLastUpdated: number
     }
 
+    type SpriteAttackAnimationData = {
+        sprite: Sprite,
+        attackingSprite: Sprite | null,
+        kind: number,
+        elaspedTime: number,
+        frameInterval: number,
+        offset: number,
+        attacking: boolean,
+        direction: SpriteDirection,
+        lastFrame: number,
+        lastUpdated: number,
+        upFrames: Image[],
+        rightFrames: Image[],
+        downFrames: Image[],
+        leftFrames: Image[]
+    }
+
     /**
      * 移動アニメーションを設定する
      * https://github.com/microsoft/pxt-common-packages/blob/master/libs/game/animation.ts#L589
@@ -32,9 +56,11 @@ namespace dungeon_pack {
     export function setMoveAnimation(sprite: Sprite, upFrames: Image[], rightFrames: Image[], downFrames: Image[], leftFrames: Image[], frameInterval?: number) {
         if (!sprite) return
 
-        let spriteDicts = game.currentScene().data[stateNamespace]
+        const dataKey = `${stateNamespace}_move`
+
+        let spriteDicts = game.currentScene().data[dataKey]
         if (!spriteDicts) {
-            spriteDicts = game.currentScene().data[stateNamespace] = {}
+            spriteDicts = game.currentScene().data[dataKey] = {}
         }
         spriteDicts[sprite.id] = {
             elaspedTime: 0,
@@ -106,6 +132,149 @@ namespace dungeon_pack {
                 }
             }
         })
+    }
+
+    /**
+     * 攻撃アニメーションを設定する
+     * https://github.com/microsoft/pxt-common-packages/blob/master/libs/game/animation.ts#L589
+     */
+    //% block="攻撃アニメーションを設定する $sprite=variables_get(mySprite) 上方向 $upFrames=animation_editor 右方向 $rightFrames=animation_editor 下方向 $downFrames=animation_editor 左方向 $leftFrames=animation_editor 武器タイプ %kind=spritekind オフセット (px) %offset フレーム間隔 (ms) $frameInterval=timePicker"
+    //% offset.defl=0
+    //% weight=99
+    export function setAttackAnimation(sprite: Sprite, upFrames: Image[], rightFrames: Image[], downFrames: Image[], leftFrames: Image[], kind: number, offset: number, frameInterval?: number) {
+        if (!sprite) return
+
+        const dataKey = `${stateNamespace}_attack`
+
+        let spriteDicts = game.currentScene().data[dataKey]
+        if (!spriteDicts) {
+            spriteDicts = game.currentScene().data[dataKey] = {}
+            game.eventContext().registerFrameHandler(scene.FOLLOW_SPRITE_PRIORITY, () => {
+                const spriteIds = Object.keys(spriteDicts)
+                for (let i = 0; i < spriteIds.length; i++) {
+                    const spriteId = spriteIds[i]
+                    const data: SpriteAttackAnimationData = spriteDicts[spriteId]
+                    const sprite = data.sprite
+                    if (Math.abs(sprite.vx) > Math.abs(sprite.vy)) {
+                        if (sprite.vx > 0) {
+                            data.direction = SpriteDirection.RIGHT
+                        } else if (sprite.vx < 0) {
+                            data.direction = SpriteDirection.LEFT
+                        }
+                    } else {
+                        if (sprite.vy > 0) {
+                            data.direction = SpriteDirection.DOWN
+                        } else if (sprite.vy < 0) {
+                            data.direction = SpriteDirection.UP
+                        }
+                    }
+                    if (data.attacking && data.attackingSprite) {
+                        let x = data.sprite.x
+                        let y = data.sprite.y
+                        if (data.direction === SpriteDirection.UP) {
+                            y = data.sprite.top - data.offset
+                        } else if (data.direction === SpriteDirection.RIGHT) {
+                            x = data.sprite.right + data.offset
+                        } else if (data.direction === SpriteDirection.DOWN) {
+                            y = data.sprite.bottom + data.offset
+                        } else if (data.direction === SpriteDirection.LEFT) {
+                            x = data.sprite.left - data.offset
+                        }
+                        data.attackingSprite.setPosition(x, y)
+                }
+                }
+            })
+            game.eventContext().registerFrameHandler(scene.ANIMATION_UPDATE_PRIORITY, () => {
+                const spriteIds = Object.keys(spriteDicts)
+                for (let i = 0; i < spriteIds.length; i++) {
+                    const spriteId = spriteIds[i]
+                    const data: SpriteAttackAnimationData = spriteDicts[spriteId]
+                    const sprite = data.sprite
+                    if (data.attacking) {
+                        let frames: Image[] = []
+                        if (data.direction === SpriteDirection.UP) {
+                            frames = data.upFrames
+                        } else if (data.direction === SpriteDirection.RIGHT) {
+                            frames = data.rightFrames
+                        } else if (data.direction === SpriteDirection.DOWN) {
+                            frames = data.downFrames
+                        } else if (data.direction === SpriteDirection.LEFT) {
+                            frames = data.leftFrames
+                        }
+                        data.elaspedTime += game.eventContext().deltaTimeMillis
+                        if (data.elaspedTime - data.lastUpdated > data.frameInterval) {
+                            data.lastUpdated = data.elaspedTime
+                            data.lastFrame += 1
+                            if (data.lastFrame === 0) {
+                                if (data.attackingSprite) data.attackingSprite.destroy()
+                                data.attackingSprite = sprites.create(frames[0], kind)
+                                data.attackingSprite.z = data.sprite.z - 1
+                                let x = data.sprite.x
+                                let y = data.sprite.y
+                                if (data.direction === SpriteDirection.UP) {
+                                    y = data.sprite.top - data.offset
+                                } else if (data.direction === SpriteDirection.RIGHT) {
+                                    x = data.sprite.right + data.offset
+                                } else if (data.direction === SpriteDirection.DOWN) {
+                                    y = data.sprite.bottom + data.offset
+                                } else if (data.direction === SpriteDirection.LEFT) {
+                                    x = data.sprite.left - data.offset
+                                }
+                                data.attackingSprite.setPosition(x, y)
+                            }
+                            if (data.lastFrame < frames.length) {
+                                const image = frames[data.lastFrame]
+                                if (data.attackingSprite.image !== image) {
+                                    data.attackingSprite.setImage(image)
+                                }
+                            } else {
+                                if (data.attackingSprite) data.attackingSprite.destroy()
+                                data.attacking = false
+                            }
+                        }
+                    }
+                }
+            })
+        }
+        spriteDicts[sprite.id] = {
+            sprite: sprite,
+            attackingSprite: null,
+            kind: kind,
+            elaspedTime: 0,
+            frameInterval: frameInterval,
+            offset: offset,
+            currentFrames: [sprite.image],
+            attacking: false,
+            direction: SpriteDirection.DOWN,
+            lastFrame: -1,
+            lastUpdated: 0,
+            upFrames: upFrames,
+            rightFrames: rightFrames,
+            downFrames: downFrames,
+            leftFrames: leftFrames
+        } as SpriteAttackAnimationData
+    }
+
+    /**
+     * 攻撃する
+     */
+    //% block="$sprite=variables_get(mySprite) が攻撃する"
+    //% weight=98
+    export function attack(sprite: Sprite) {
+        if (!sprite) return
+
+        const dataKey = `${stateNamespace}_attack`
+
+        let spriteDicts = game.currentScene().data[dataKey]
+        if (!spriteDicts) {
+            spriteDicts = game.currentScene().data[dataKey] = {}
+        }
+        const data = spriteDicts[sprite.id]
+        if (!data) return
+
+        data.attacking = true
+        data.lastFrame = -1
+        data.lastUpdated = 0
     }
 
     /**
