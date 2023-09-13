@@ -1,5 +1,6 @@
 /**
  * ダンジョンパック
+ * https://github.com/microsoft/pxt-common-packages/blob/master/libs/game/animation.ts#L589
  */
 //% weight=150 color=#e67e22 icon="\uf3ed" block="ダンジョンパック"
 namespace dungeon_pack {
@@ -12,9 +13,18 @@ namespace dungeon_pack {
         LEFT
     }
 
+    type SpriteAngleData = {
+        sprite: Sprite,
+        direction: SpriteDirection,
+        angle: number,
+        active: boolean
+    }
+
     type SpriteMoveAnimationData = {
+        sprite: Sprite,
         elaspedTime: number,
         frameInterval: number,
+        direction: SpriteDirection,
         currentFrames: Image[],
         upFrames: Image[],
         upLastFrame: number,
@@ -47,11 +57,65 @@ namespace dungeon_pack {
         leftFrames: Image[]
     }
 
+
+    /**
+     * スプライトの向きを管理する
+     */
+    //% block="$sprite=variables_get(mySprite) の向きを管理する"
+    //% weight=101
+    export function manageDirection(sprite: Sprite) {
+        if (!sprite) return
+
+        const dataKey = `${stateNamespace}_angle`
+
+        let spriteDicts = game.currentScene().data[dataKey]
+        if (!spriteDicts) {
+            spriteDicts = game.currentScene().data[dataKey] = {}
+            game.eventContext().registerFrameHandler(scene.ANIMATION_UPDATE_PRIORITY, () => {
+                const spriteIds = Object.keys(spriteDicts)
+                for (let i = 0; i < spriteIds.length; i++) {
+                    const spriteId = spriteIds[i]
+                    const data: SpriteAngleData = spriteDicts[spriteId]
+                    if (!data.active) {
+                        continue
+                    }
+                    const sprite = data.sprite
+                    if (sprite.vx === 0 && sprite.vy === 0) {
+                        continue
+                    }
+                    data.angle = Math.atan2(sprite.vy, sprite.vx)
+                    if (Math.abs(sprite.vx) > Math.abs(sprite.vy)) {
+                        if (sprite.vx > 0) {
+                            data.direction = SpriteDirection.RIGHT
+                        } else {
+                            data.direction = SpriteDirection.LEFT
+                        }
+                    } else {
+                        if (sprite.vy > 0) {
+                            data.direction = SpriteDirection.DOWN
+                        } else {
+                            data.direction = SpriteDirection.UP
+                        }
+                    }
+                }
+            })
+        }
+        sprite.onDestroyed(() => {
+            spriteDicts[sprite.id].active = false
+        })
+        spriteDicts[sprite.id] = {
+            sprite: sprite,
+            direction: SpriteDirection.DOWN,
+            angle: Math.PI * 0.5,
+            active: true
+        } as SpriteAngleData
+    }
+
     /**
      * 移動アニメーションを設定する
-     * https://github.com/microsoft/pxt-common-packages/blob/master/libs/game/animation.ts#L589
      */
     //% block="移動アニメーションを設定する $sprite=variables_get(mySprite) 上方向 $upFrames=animation_editor 右方向 $rightFrames=animation_editor 下方向 $downFrames=animation_editor 左方向 $leftFrames=animation_editor フレーム間隔 (ms) $frameInterval=timePicker"
+    //% frameInterval.defl=100
     //% weight=100
     export function setMoveAnimation(sprite: Sprite, upFrames: Image[], rightFrames: Image[], downFrames: Image[], leftFrames: Image[], frameInterval?: number) {
         if (!sprite) return
@@ -61,10 +125,77 @@ namespace dungeon_pack {
         let spriteDicts = game.currentScene().data[dataKey]
         if (!spriteDicts) {
             spriteDicts = game.currentScene().data[dataKey] = {}
+            game.eventContext().registerFrameHandler(scene.ANIMATION_UPDATE_PRIORITY, () => {
+                const spriteIds = Object.keys(spriteDicts)
+                for (let i = 0; i < spriteIds.length; i++) {
+                    const spriteId = spriteIds[i]
+                    const data: SpriteMoveAnimationData = spriteDicts[spriteId]
+                    const sprite = data.sprite
+                    if (sprite.vx === 0 && sprite.vy === 0) {
+                        const image = data.currentFrames[0]
+                        if (sprite.image !== image) sprite.setImage(image)
+                        data.upLastFrame = 0
+                        data.rightLastFrame = 0
+                        data.downLastFrame = 0
+                        data.leftLastFrame = 0
+                        continue
+                    }
+
+                    data.elaspedTime += game.eventContext().deltaTimeMillis
+                    if (Math.abs(sprite.vx) > Math.abs(sprite.vy)) {
+                        if (sprite.vx > 0) {
+                            data.direction = SpriteDirection.RIGHT
+                            if (data.elaspedTime - data.rightLastUpdated > data.frameInterval) {
+                                data.rightLastUpdated = data.elaspedTime
+                                data.rightLastFrame = (data.rightLastFrame + 1) % data.rightFrames.length
+                                const image = data.rightFrames[data.rightLastFrame]
+                                if (sprite.image !== image) sprite.setImage(image)
+                                data.currentFrames = data.rightFrames
+                            }
+                        } else {
+                            data.direction = SpriteDirection.LEFT
+                            if (data.elaspedTime - data.leftLastUpdated > data.frameInterval) {
+                                data.leftLastUpdated = data.elaspedTime
+                                data.leftLastFrame = (data.leftLastFrame + 1) % data.leftFrames.length
+                                const image = data.leftFrames[data.leftLastFrame]
+                                if (sprite.image !== image) sprite.setImage(image)
+                                data.currentFrames = data.leftFrames
+                            }
+                        }
+                    } else {
+                        if (sprite.vy > 0) {
+                            data.direction = SpriteDirection.DOWN
+                            if (data.elaspedTime - data.downLastUpdated > data.frameInterval) {
+                                data.downLastUpdated = data.elaspedTime
+                                data.downLastFrame = (data.downLastFrame + 1) % data.downFrames.length
+                                const image = data.downFrames[data.downLastFrame]
+                                if (sprite.image !== image) sprite.setImage(image)
+                                data.currentFrames = data.downFrames
+                            }
+                        } else {
+                            data.direction = SpriteDirection.UP
+                            if (data.elaspedTime - data.upLastUpdated > data.frameInterval) {
+                                data.upLastUpdated = data.elaspedTime
+                                data.upLastFrame = (data.upLastFrame + 1) % data.upFrames.length
+                                const image = data.upFrames[data.upLastFrame]
+                                if (sprite.image !== image) sprite.setImage(image)
+                                data.currentFrames = data.upFrames
+                            }
+                        }
+                    }
+                }
+            })
         }
+        /*
+        sprite.onDestroyed(() => {
+            delete spriteDicts[sprite.id]
+        })
+        */
         spriteDicts[sprite.id] = {
+            sprite: sprite,
             elaspedTime: 0,
             frameInterval: frameInterval,
+            direction: SpriteDirection.DOWN,
             currentFrames: [sprite.image],
             upFrames: upFrames,
             upLastFrame: 0,
@@ -79,67 +210,14 @@ namespace dungeon_pack {
             leftLastFrame: 0,
             leftLastUpdated: 0
         } as SpriteMoveAnimationData
-        game.eventContext().registerFrameHandler(scene.ANIMATION_UPDATE_PRIORITY, () => {
-            if (!sprite) return
-
-            const data: SpriteMoveAnimationData = spriteDicts[sprite.id]
-            if (sprite.vx === 0 && sprite.vy === 0) {
-                const image = data.currentFrames[0]
-                if (sprite.image !== image) sprite.setImage(image)
-                data.upLastFrame = 0
-                data.rightLastFrame = 0
-                data.downLastFrame = 0
-                data.leftLastFrame = 0
-                return
-            }
-
-            data.elaspedTime += game.eventContext().deltaTimeMillis
-            if (Math.abs(sprite.vx) > Math.abs(sprite.vy)) {
-                if (sprite.vx > 0) {
-                    if (data.elaspedTime - data.rightLastUpdated > data.frameInterval) {
-                        data.rightLastUpdated = data.elaspedTime
-                        data.rightLastFrame = (data.rightLastFrame + 1) % leftFrames.length
-                        const image = data.rightFrames[data.rightLastFrame]
-                        if (sprite.image !== image) sprite.setImage(image)
-                        data.currentFrames = data.rightFrames
-                    }
-                } else {
-                    if (data.elaspedTime - data.leftLastUpdated > data.frameInterval) {
-                        data.leftLastUpdated = data.elaspedTime
-                        data.leftLastFrame = (data.leftLastFrame + 1) % data.leftFrames.length
-                        const image = data.leftFrames[data.leftLastFrame]
-                        if (sprite.image !== image) sprite.setImage(image)
-                        data.currentFrames = data.leftFrames
-                    }
-                }
-            } else {
-                if (sprite.vy > 0) {
-                    if (data.elaspedTime - data.downLastUpdated > data.frameInterval) {
-                        data.downLastUpdated = data.elaspedTime
-                        data.downLastFrame = (data.downLastFrame + 1) % data.downFrames.length
-                        const image = data.downFrames[data.downLastFrame]
-                        if (sprite.image !== image) sprite.setImage(image)
-                        data.currentFrames = data.downFrames
-                    }
-                } else {
-                    if (data.elaspedTime - data.upLastUpdated > data.frameInterval) {
-                        data.upLastUpdated = data.elaspedTime
-                        data.upLastFrame = (data.upLastFrame + 1) % data.upFrames.length
-                        const image = data.upFrames[data.upLastFrame]
-                        if (sprite.image !== image) sprite.setImage(image)
-                        data.currentFrames = data.upFrames
-                    }
-                }
-            }
-        })
     }
 
     /**
      * 攻撃アニメーションを設定する
-     * https://github.com/microsoft/pxt-common-packages/blob/master/libs/game/animation.ts#L589
      */
     //% block="攻撃アニメーションを設定する $sprite=variables_get(mySprite) 上方向 $upFrames=animation_editor 右方向 $rightFrames=animation_editor 下方向 $downFrames=animation_editor 左方向 $leftFrames=animation_editor 武器タイプ %kind=spritekind オフセット (px) %offset フレーム間隔 (ms) $frameInterval=timePicker"
     //% offset.defl=0
+    //% frameInterval.defl=100
     //% weight=99
     export function setAttackAnimation(sprite: Sprite, upFrames: Image[], rightFrames: Image[], downFrames: Image[], leftFrames: Image[], kind: number, offset: number, frameInterval?: number) {
         if (!sprite) return
@@ -181,7 +259,7 @@ namespace dungeon_pack {
                             x = data.sprite.left - data.offset
                         }
                         data.attackingSprite.setPosition(x, y)
-                }
+                    }
                 }
             })
             game.eventContext().registerFrameHandler(scene.ANIMATION_UPDATE_PRIORITY, () => {
@@ -253,6 +331,11 @@ namespace dungeon_pack {
             downFrames: downFrames,
             leftFrames: leftFrames
         } as SpriteAttackAnimationData
+        /*
+        sprite.onDestroyed(() => {
+            delete spriteDicts[sprite.id]
+        })
+        */
     }
 
     /**
@@ -278,6 +361,52 @@ namespace dungeon_pack {
     }
 
     /**
+     * 発射体を発射する
+     */
+    //% block="発射体を発射する $sprite=variables_get(mySprite) 上方向 $upFrames=animation_editor 右方向 $rightFrames=animation_editor 下方向 $downFrames=animation_editor 左方向 $leftFrames=animation_editor 速度 %velocity 武器タイプ %kind=spritekind オフセット (px) %offset フレーム間隔 (ms) $frameInterval=timePicker"
+    //% velocity.defl=50
+    //% offset.defl=0
+    //% frameInterval.defl=100
+    //% weight=97
+    export function shootProjectile(sprite: Sprite, upFrames: Image[], rightFrames: Image[], downFrames: Image[], leftFrames: Image[], velocity: number, kind: number, offset: number, frameInterval?: number) {
+        if (!sprite) return
+
+        let frames: Image[] = downFrames
+        let x = sprite.x
+        let y = sprite.y + offset
+        let vx = 0
+        let vy = velocity
+        const dataKey = `${stateNamespace}_angle`
+        let spriteDicts = game.currentScene().data[dataKey]
+        if (spriteDicts && spriteDicts[sprite.id]) {
+            const data = spriteDicts[sprite.id]
+            if (!data.active) {
+                return
+            }
+            x = sprite.x + offset * Math.cos(data.angle)
+            y = sprite.y + offset * Math.sin(data.angle)
+            vx = velocity * Math.cos(data.angle)
+            vy = velocity * Math.sin(data.angle)
+            const direction = data.direction
+            if (direction === SpriteDirection.UP) {
+                frames = upFrames
+            } else if (direction === SpriteDirection.RIGHT) {
+                frames = rightFrames
+            } else if (direction === SpriteDirection.DOWN) {
+                frames = downFrames
+            } else {
+                frames = leftFrames
+            }
+        }
+        const projectile = sprites.create(frames[0], kind)
+        projectile.setPosition(x, y)
+        projectile.setVelocity(vx, vy)
+        projectile.setFlag(SpriteFlag.DestroyOnWall, true)
+        projectile.setFlag(SpriteFlag.AutoDestroy, true)
+        animation.runImageAnimation(projectile, frames, frameInterval, true)
+    }
+
+    /**
      * タイル上にスプライトを生成する
      */
     //% block="スプライト%sprite=screen_image_picker (%kind=spritekind タイプ)をタイル%tile 上に生成する || (速度 vx:%vx , vy:%vy)"
@@ -287,7 +416,7 @@ namespace dungeon_pack {
     //% inlineInputMode=inline
     //% vx.defl=0
     //% vy.defl=0
-    //% weight=97
+    //% weight=96
     export function spawnSpritesOnTiles(sprite: Image, kind: number, tile: Image, vx: number = 0, vy: number = 0) {
         tiles.getTilesByType(tile).forEach(tLoc => {
             const s = sprites.create(sprite, kind)
