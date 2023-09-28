@@ -427,4 +427,63 @@ namespace dungeon_pack {
             s.setBounceOnWall(true)
         })
     }
+
+    /**
+     * HPステータスバーをスプライトに設定する
+     */
+    //% block="HPステータスバーをスプライト%sprite=variables_get(mySprite) に設定する || (幅: %width , 高さ: %height, オフセット: %offset)"
+    //% expandableArgumentMode="toggle"
+    //% inlineInputMode=inline
+    //% width.defl=20
+    //% height.defl=4
+    //% offset.defl=4
+    //% group="HPステータスバー"
+    //% weight=95
+    export function setHPStatusBar(sprite: Sprite, width: number = 20, height: number = 4, offset: number = 4) {
+        let statusbar = statusbars.create(width, height, StatusBarKind.Health)
+        statusbar.attachToSprite(sprite)
+        statusbar.setOffsetPadding(0, offset)
+    }
+
+
+
+    /**
+     * スプライトにHPダメージを与える
+     */
+    //% block="スプライト%sprite=variables_get(mySprite) に%damage のHPダメージを与える"
+    //% damage.defl=10
+    //% group="HPステータスバー"
+    //% weight=94
+    export function changeHPStatusBar(sprite: Sprite, damage: number = 10) {
+        let statusbar = statusbars.getStatusBarAttachedTo(StatusBarKind.Health, sprite)
+        if (statusbar && statusbar.value > 0) {
+            statusbar.value = Math.max(0, statusbar.value - damage)
+        }
+    }
+
+    /**
+     * HPステータスバーがゼロになったとき
+     */
+    //% block="HPステータスバーがゼロになったとき"
+    //% draggableParameters="reporter"
+    //% group="HPステータスバー"
+    //% weight=93
+    export function onHPStatusBarZero(handler: (sprite: Sprite, type: number) => void) {
+        const dataKey = `${stateNamespace}_on_hp_zero`
+        let handlers = game.currentScene().data[dataKey] as ((sprite: Sprite, type: number) => void)[]
+        if (!handlers) {
+            handlers = game.currentScene().data[dataKey] = [] as ((sprite: Sprite, type: number) => void)[]
+        }
+        handlers.push(handler)
+    }
+
+    statusbars.onZero(StatusBarKind.Health, (statusbar: StatusBarSprite) => {
+        const dataKey = `${stateNamespace}_on_hp_zero`
+        const handlers = (game.currentScene().data[dataKey] || []) as ((sprite: Sprite, type: number) => void)[]
+        for (let i = 0; i < handlers.length; i++) {
+            const handler = handlers[i]
+            const sprite = statusbar.spriteAttachedTo()
+            handler(sprite, sprite.kind());
+        }
+    })
 }
