@@ -68,7 +68,7 @@ namespace dungeon_pack {
     export function manageDirection(sprite: Sprite) {
         if (!sprite) return
 
-        const dataKey = `${stateNamespace}_angle`
+        const dataKey = stateNamespace
 
         let spriteDicts = game.currentScene().data[dataKey]
         if (!spriteDicts) {
@@ -124,7 +124,7 @@ namespace dungeon_pack {
     export function setMoveAnimation(sprite: Sprite, upFrames: Image[], rightFrames: Image[], downFrames: Image[], leftFrames: Image[], frameInterval?: number) {
         if (!sprite) return
 
-        const dataKey = `${stateNamespace}_move`
+        const dataKey = stateNamespace
 
         let spriteDicts = game.currentScene().data[dataKey]
         if (!spriteDicts) {
@@ -237,7 +237,7 @@ namespace dungeon_pack {
         upSpriteFrames?: Image[], rightSpriteFrames?: Image[], downSpriteFrames?: Image[], leftSpriteFrames?: Image[]) {
         if (!sprite) return
 
-        const dataKey = `${stateNamespace}_attack`
+        const dataKey = stateNamespace
 
         let spriteDicts = game.currentScene().data[dataKey]
         if (!spriteDicts) {
@@ -383,18 +383,18 @@ namespace dungeon_pack {
     export function attack(sprite: Sprite) {
         if (!sprite) return
 
-        const dataKey = `${stateNamespace}_attack`
+        const dataKey = stateNamespace
 
         let spriteDicts = game.currentScene().data[dataKey]
         if (!spriteDicts) {
             spriteDicts = game.currentScene().data[dataKey] = {}
         }
-        const data = spriteDicts[sprite.id]
-        if (!data || data.attacking) return
+        const data = spriteDicts[sprite.id] as SpriteAnimationData
+        if (!data || data.attack.attacking) return
 
-        data.attacking = true
-        data.lastFrame = -1
-        data.lastUpdated = 0
+        data.attack.attacking = true
+        data.attack.lastFrame = -1
+        data.attack.lastUpdated = 0
     }
 
     /**
@@ -413,7 +413,7 @@ namespace dungeon_pack {
         let y = sprite.y + offset
         let vx = 0
         let vy = velocity
-        const dataKey = `${stateNamespace}_angle`
+        const dataKey = stateNamespace
         let spriteDicts = game.currentScene().data[dataKey]
         if (spriteDicts && spriteDicts[sprite.id]) {
             const data = spriteDicts[sprite.id]
