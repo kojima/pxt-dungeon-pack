@@ -6,6 +6,12 @@
 namespace dungeon_pack {
     const stateNamespace = "__dungeon_pack";
 
+    type AnimationHandlers = {
+        angleHandlerRegistered?: boolean,
+        moveHandlerRegistered?: boolean,
+        attackHandlerRegistered?: boolean
+    }
+
     enum SpriteDirection {
         UP,
         RIGHT,
@@ -79,6 +85,13 @@ namespace dungeon_pack {
         let spriteDicts = game.currentScene().data[dataKey]
         if (!spriteDicts) {
             spriteDicts = game.currentScene().data[dataKey] = {}
+        }
+
+        let handlers = game.currentScene().data[`${stateNamespace}_handlers`] as AnimationHandlers
+        if (!handlers || !handlers.angleHandlerRegistered) {
+            if (!handlers) handlers = {angleHandlerRegistered: true}
+            else handlers.angleHandlerRegistered = true
+
             game.eventContext().registerFrameHandler(scene.ANIMATION_UPDATE_PRIORITY, () => {
                 const spriteIds = Object.keys(spriteDicts)
                 for (let i = 0; i < spriteIds.length; i++) {
@@ -108,6 +121,7 @@ namespace dungeon_pack {
                 }
             })
         }
+        game.currentScene().data[`${stateNamespace}_handlers`] = handlers
         sprite.onDestroyed(() => {
             spriteDicts[sprite.id].active = false
         })
@@ -140,6 +154,12 @@ namespace dungeon_pack {
         let spriteDicts = game.currentScene().data[dataKey]
         if (!spriteDicts) {
             spriteDicts = game.currentScene().data[dataKey] = {}
+        }
+        let handlers = game.currentScene().data[`${stateNamespace}_handlers`] as AnimationHandlers
+        if (!handlers || !handlers.moveHandlerRegistered) {
+            if (!handlers) handlers = { moveHandlerRegistered: true }
+            else handlers.moveHandlerRegistered = true
+
             game.eventContext().registerFrameHandler(scene.ANIMATION_UPDATE_PRIORITY, () => {
                 const spriteIds = Object.keys(spriteDicts)
                 for (let i = 0; i < spriteIds.length; i++) {
@@ -203,6 +223,7 @@ namespace dungeon_pack {
                 }
             })
         }
+        game.currentScene().data[`${stateNamespace}_handlers`] = handlers
         /*
         sprite.onDestroyed(() => {
             delete spriteDicts[sprite.id]
@@ -258,6 +279,12 @@ namespace dungeon_pack {
         let spriteDicts = game.currentScene().data[dataKey]
         if (!spriteDicts) {
             spriteDicts = game.currentScene().data[dataKey] = {}
+        }
+        let handlers = game.currentScene().data[`${stateNamespace}_handlers`] as AnimationHandlers
+        if (!handlers || !handlers.attackHandlerRegistered) {
+            if (!handlers) handlers = { attackHandlerRegistered: true }
+            else handlers.attackHandlerRegistered = true
+
             game.eventContext().registerFrameHandler(scene.FOLLOW_SPRITE_PRIORITY, () => {
                 const spriteIds = Object.keys(spriteDicts)
                 for (let i = 0; i < spriteIds.length; i++) {
@@ -277,7 +304,7 @@ namespace dungeon_pack {
                             data.attack.direction = SpriteDirection.UP
                         }
                     }
-                    if (data.attack.attacking && data.attack.attackingSprite) {
+                    if (data.attack && data.attack.attacking && data.attack.attackingSprite) {
                         let x = data.sprite.x
                         let y = data.sprite.y
                         if (data.attack.direction === SpriteDirection.UP) {
@@ -300,7 +327,7 @@ namespace dungeon_pack {
                     const spriteId = spriteIds[i]
                     const data: SpriteAnimationData = spriteDicts[spriteId]
                     const sprite = data.sprite
-                    if (data.attack.attacking) {
+                    if (data.attack && data.attack.attacking) {
                         let frames: Image[] = []
                         let spriteFrames: Image[] = []
                         if (data.attack.direction === SpriteDirection.UP) {
@@ -361,6 +388,7 @@ namespace dungeon_pack {
                 }
             })
         }
+        game.currentScene().data[`${stateNamespace}_handlers`] = handlers
         const data = {
             attackingSprite: null,
             kind: kind,
