@@ -156,7 +156,7 @@ namespace dungeon_pack {
                                 if (sprite.image !== image) sprite.setImage(image)
                                 data.currentFrames = data.rightFrames
                             }
-                        } else {
+                        } else if (sprite.vx < 0) {
                             data.direction = SpriteDirection.LEFT
                             if (data.elaspedTime - data.leftLastUpdated > data.frameInterval) {
                                 data.leftLastUpdated = data.elaspedTime
@@ -176,7 +176,7 @@ namespace dungeon_pack {
                                 if (sprite.image !== image) sprite.setImage(image)
                                 data.currentFrames = data.downFrames
                             }
-                        } else {
+                        } else if (sprite.vy < 0) {
                             data.direction = SpriteDirection.UP
                             if (data.elaspedTime - data.upLastUpdated > data.frameInterval) {
                                 data.upLastUpdated = data.elaspedTime
@@ -268,6 +268,7 @@ namespace dungeon_pack {
                         } else if (data.direction === SpriteDirection.LEFT) {
                             x = data.sprite.left - data.offset
                         }
+                        data.sprite.setVelocity(0, 0)
                         data.attackingSprite.setPosition(x, y)
                     }
                 }
