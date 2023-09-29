@@ -13,52 +13,50 @@ namespace dungeon_pack {
         LEFT
     }
 
-    type SpriteAngleData = {
+    type SpriteAnimationData = {
         sprite: Sprite,
-        direction: SpriteDirection,
-        angle: number,
-        active: boolean
-    }
-
-    type SpriteMoveAnimationData = {
-        sprite: Sprite,
-        elaspedTime: number,
-        frameInterval: number,
-        direction: SpriteDirection,
-        currentFrames: Image[],
-        upFrames: Image[],
-        upLastFrame: number,
-        upLastUpdated: number,
-        rightFrames: Image[],
-        rightLastFrame: number,
-        rightLastUpdated: number,
-        downFrames: Image[],
-        downLastFrame: number,
-        downLastUpdated: number,
-        leftFrames: Image[],
-        leftLastFrame: number,
-        leftLastUpdated: number
-    }
-
-    type SpriteAttackAnimationData = {
-        sprite: Sprite,
-        attackingSprite: Sprite | null,
-        kind: number,
-        elaspedTime: number,
-        frameInterval: number,
-        offset: number,
-        attacking: boolean,
-        direction: SpriteDirection,
-        lastFrame: number,
-        lastUpdated: number,
-        upFrames: Image[],
-        rightFrames: Image[],
-        downFrames: Image[],
-        leftFrames: Image[],
-        upSpriteFrames: Image[],
-        rightSpriteFrames: Image[],
-        downSpriteFrames: Image[],
-        leftSpriteFrames: Image[]
+        angle?: {
+            direction: SpriteDirection,
+            value: number,
+            active: boolean
+        },
+        move?: {
+            elaspedTime: number,
+            frameInterval: number,
+            direction: SpriteDirection,
+            currentFrames: Image[],
+            upFrames: Image[],
+            upLastFrame: number,
+            upLastUpdated: number,
+            rightFrames: Image[],
+            rightLastFrame: number,
+            rightLastUpdated: number,
+            downFrames: Image[],
+            downLastFrame: number,
+            downLastUpdated: number,
+            leftFrames: Image[],
+            leftLastFrame: number,
+            leftLastUpdated: number
+        },
+        attack?: {
+            attackingSprite: Sprite | null,
+            kind: number,
+            elaspedTime: number,
+            frameInterval: number,
+            offset: number,
+            attacking: boolean,
+            direction: SpriteDirection,
+            lastFrame: number,
+            lastUpdated: number,
+            upFrames: Image[],
+            rightFrames: Image[],
+            downFrames: Image[],
+            leftFrames: Image[],
+            upSpriteFrames: Image[],
+            rightSpriteFrames: Image[],
+            downSpriteFrames: Image[],
+            leftSpriteFrames: Image[]
+        }
     }
 
 
@@ -79,26 +77,26 @@ namespace dungeon_pack {
                 const spriteIds = Object.keys(spriteDicts)
                 for (let i = 0; i < spriteIds.length; i++) {
                     const spriteId = spriteIds[i]
-                    const data: SpriteAngleData = spriteDicts[spriteId]
-                    if (!data.active) {
+                    const data: SpriteAnimationData = spriteDicts[spriteId]
+                    if (!data.angle || data.angle.active) {
                         continue
                     }
                     const sprite = data.sprite
                     if (sprite.vx === 0 && sprite.vy === 0) {
                         continue
                     }
-                    data.angle = Math.atan2(sprite.vy, sprite.vx)
+                    data.angle.value = Math.atan2(sprite.vy, sprite.vx)
                     if (Math.abs(sprite.vx) > Math.abs(sprite.vy)) {
                         if (sprite.vx > 0) {
-                            data.direction = SpriteDirection.RIGHT
+                            data.angle.direction = SpriteDirection.RIGHT
                         } else {
-                            data.direction = SpriteDirection.LEFT
+                            data.angle.direction = SpriteDirection.LEFT
                         }
                     } else {
                         if (sprite.vy > 0) {
-                            data.direction = SpriteDirection.DOWN
+                            data.angle.direction = SpriteDirection.DOWN
                         } else {
-                            data.direction = SpriteDirection.UP
+                            data.angle.direction = SpriteDirection.UP
                         }
                     }
                 }
@@ -109,10 +107,12 @@ namespace dungeon_pack {
         })
         spriteDicts[sprite.id] = {
             sprite: sprite,
-            direction: SpriteDirection.DOWN,
-            angle: Math.PI * 0.5,
-            active: true
-        } as SpriteAngleData
+            angle: {
+                direction: SpriteDirection.DOWN,
+                value: Math.PI * 0.5,
+                active: true
+            }
+        } as SpriteAnimationData
     }
 
     /**
@@ -133,57 +133,59 @@ namespace dungeon_pack {
                 const spriteIds = Object.keys(spriteDicts)
                 for (let i = 0; i < spriteIds.length; i++) {
                     const spriteId = spriteIds[i]
-                    const data: SpriteMoveAnimationData = spriteDicts[spriteId]
+                    const data: SpriteAnimationData = spriteDicts[spriteId]
                     const sprite = data.sprite
                     if (sprite.vx === 0 && sprite.vy === 0) {
-                        const image = data.currentFrames[0]
+                        if (data.attack && data.attack.attacking) continue
+
+                        const image = data.move.currentFrames[0]
                         if (sprite.image !== image) sprite.setImage(image)
-                        data.upLastFrame = 0
-                        data.rightLastFrame = 0
-                        data.downLastFrame = 0
-                        data.leftLastFrame = 0
+                        data.move.upLastFrame = 0
+                        data.move.rightLastFrame = 0
+                        data.move.downLastFrame = 0
+                        data.move.leftLastFrame = 0
                         continue
                     }
 
-                    data.elaspedTime += game.eventContext().deltaTimeMillis
+                    data.move.elaspedTime += game.eventContext().deltaTimeMillis
                     if (Math.abs(sprite.vx) > Math.abs(sprite.vy)) {
                         if (sprite.vx > 0) {
-                            data.direction = SpriteDirection.RIGHT
-                            if (data.elaspedTime - data.rightLastUpdated > data.frameInterval) {
-                                data.rightLastUpdated = data.elaspedTime
-                                data.rightLastFrame = (data.rightLastFrame + 1) % data.rightFrames.length
-                                const image = data.rightFrames[data.rightLastFrame]
+                            data.move.direction = SpriteDirection.RIGHT
+                            if (data.move.elaspedTime - data.move.rightLastUpdated > data.move.frameInterval) {
+                                data.move.rightLastUpdated = data.move.elaspedTime
+                                data.move.rightLastFrame = (data.move.rightLastFrame + 1) % data.move.rightFrames.length
+                                const image = data.move.rightFrames[data.move.rightLastFrame]
                                 if (sprite.image !== image) sprite.setImage(image)
-                                data.currentFrames = data.rightFrames
+                                data.move.currentFrames = data.move.rightFrames
                             }
                         } else if (sprite.vx < 0) {
-                            data.direction = SpriteDirection.LEFT
-                            if (data.elaspedTime - data.leftLastUpdated > data.frameInterval) {
-                                data.leftLastUpdated = data.elaspedTime
-                                data.leftLastFrame = (data.leftLastFrame + 1) % data.leftFrames.length
-                                const image = data.leftFrames[data.leftLastFrame]
+                            data.move.direction = SpriteDirection.LEFT
+                            if (data.move.elaspedTime - data.move.leftLastUpdated > data.move.frameInterval) {
+                                data.move.leftLastUpdated = data.move.elaspedTime
+                                data.move.leftLastFrame = (data.move.leftLastFrame + 1) % data.move.leftFrames.length
+                                const image = data.move.leftFrames[data.move.leftLastFrame]
                                 if (sprite.image !== image) sprite.setImage(image)
-                                data.currentFrames = data.leftFrames
+                                data.move.currentFrames = data.move.leftFrames
                             }
                         }
                     } else {
                         if (sprite.vy > 0) {
-                            data.direction = SpriteDirection.DOWN
-                            if (data.elaspedTime - data.downLastUpdated > data.frameInterval) {
-                                data.downLastUpdated = data.elaspedTime
-                                data.downLastFrame = (data.downLastFrame + 1) % data.downFrames.length
-                                const image = data.downFrames[data.downLastFrame]
+                            data.move.direction = SpriteDirection.DOWN
+                            if (data.move.elaspedTime - data.move.downLastUpdated > data.move.frameInterval) {
+                                data.move.downLastUpdated = data.move.elaspedTime
+                                data.move.downLastFrame = (data.move.downLastFrame + 1) % data.move.downFrames.length
+                                const image = data.move.downFrames[data.move.downLastFrame]
                                 if (sprite.image !== image) sprite.setImage(image)
-                                data.currentFrames = data.downFrames
+                                data.move.currentFrames = data.move.downFrames
                             }
                         } else if (sprite.vy < 0) {
-                            data.direction = SpriteDirection.UP
-                            if (data.elaspedTime - data.upLastUpdated > data.frameInterval) {
-                                data.upLastUpdated = data.elaspedTime
-                                data.upLastFrame = (data.upLastFrame + 1) % data.upFrames.length
-                                const image = data.upFrames[data.upLastFrame]
+                            data.move.direction = SpriteDirection.UP
+                            if (data.move.elaspedTime - data.move.upLastUpdated > data.move.frameInterval) {
+                                data.move.upLastUpdated = data.move.elaspedTime
+                                data.move.upLastFrame = (data.move.upLastFrame + 1) % data.move.upFrames.length
+                                const image = data.move.upFrames[data.move.upLastFrame]
                                 if (sprite.image !== image) sprite.setImage(image)
-                                data.currentFrames = data.upFrames
+                                data.move.currentFrames = data.move.upFrames
                             }
                         }
                     }
@@ -197,23 +199,26 @@ namespace dungeon_pack {
         */
         spriteDicts[sprite.id] = {
             sprite: sprite,
-            elaspedTime: 0,
-            frameInterval: frameInterval,
-            direction: SpriteDirection.DOWN,
-            currentFrames: [sprite.image],
-            upFrames: upFrames,
-            upLastFrame: 0,
-            upLastUpdated: 0,
-            rightFrames: rightFrames,
-            rightLastFrame: 0,
-            rightLastUpdated: 0,
-            downFrames: downFrames,
-            downLastFrame: 0,
-            downLastUpdated: 0,
-            leftFrames: leftFrames,
-            leftLastFrame: 0,
-            leftLastUpdated: 0
-        } as SpriteMoveAnimationData
+            move: {
+                elaspedTime: 0,
+                frameInterval: frameInterval,
+                direction: SpriteDirection.DOWN,
+                currentFrames: [sprite.image],
+                upFrames: upFrames,
+                upLastFrame: 0,
+                upLastUpdated: 0,
+                rightFrames: rightFrames,
+                rightLastFrame: 0,
+                rightLastUpdated: 0,
+                downFrames: downFrames,
+                downLastFrame: 0,
+                downLastUpdated: 0,
+                leftFrames: leftFrames,
+                leftLastFrame: 0,
+                leftLastUpdated: 0
+
+            }
+        } as SpriteAnimationData
     }
 
     /**
@@ -241,35 +246,35 @@ namespace dungeon_pack {
                 const spriteIds = Object.keys(spriteDicts)
                 for (let i = 0; i < spriteIds.length; i++) {
                     const spriteId = spriteIds[i]
-                    const data: SpriteAttackAnimationData = spriteDicts[spriteId]
+                    const data: SpriteAnimationData = spriteDicts[spriteId]
                     const sprite = data.sprite
                     if (Math.abs(sprite.vx) > Math.abs(sprite.vy)) {
                         if (sprite.vx > 0) {
-                            data.direction = SpriteDirection.RIGHT
+                            data.attack.direction = SpriteDirection.RIGHT
                         } else if (sprite.vx < 0) {
-                            data.direction = SpriteDirection.LEFT
+                            data.attack.direction = SpriteDirection.LEFT
                         }
                     } else {
                         if (sprite.vy > 0) {
-                            data.direction = SpriteDirection.DOWN
+                            data.attack.direction = SpriteDirection.DOWN
                         } else if (sprite.vy < 0) {
-                            data.direction = SpriteDirection.UP
+                            data.attack.direction = SpriteDirection.UP
                         }
                     }
-                    if (data.attacking && data.attackingSprite) {
+                    if (data.attack.attacking && data.attack.attackingSprite) {
                         let x = data.sprite.x
                         let y = data.sprite.y
-                        if (data.direction === SpriteDirection.UP) {
-                            y = data.sprite.top - data.offset
-                        } else if (data.direction === SpriteDirection.RIGHT) {
-                            x = data.sprite.right + data.offset
-                        } else if (data.direction === SpriteDirection.DOWN) {
-                            y = data.sprite.bottom + data.offset
-                        } else if (data.direction === SpriteDirection.LEFT) {
-                            x = data.sprite.left - data.offset
+                        if (data.attack.direction === SpriteDirection.UP) {
+                            y = data.sprite.top - data.attack.offset
+                        } else if (data.attack.direction === SpriteDirection.RIGHT) {
+                            x = data.sprite.right + data.attack.offset
+                        } else if (data.attack.direction === SpriteDirection.DOWN) {
+                            y = data.sprite.bottom + data.attack.offset
+                        } else if (data.attack.direction === SpriteDirection.LEFT) {
+                            x = data.sprite.left - data.attack.offset
                         }
                         data.sprite.setVelocity(0, 0)
-                        data.attackingSprite.setPosition(x, y)
+                        data.attack.attackingSprite.setPosition(x, y)
                     }
                 }
             })
@@ -277,63 +282,63 @@ namespace dungeon_pack {
                 const spriteIds = Object.keys(spriteDicts)
                 for (let i = 0; i < spriteIds.length; i++) {
                     const spriteId = spriteIds[i]
-                    const data: SpriteAttackAnimationData = spriteDicts[spriteId]
+                    const data: SpriteAnimationData = spriteDicts[spriteId]
                     const sprite = data.sprite
-                    if (data.attacking) {
+                    if (data.attack.attacking) {
                         let frames: Image[] = []
                         let spriteFrames: Image[] = []
-                        if (data.direction === SpriteDirection.UP) {
-                            frames = data.upFrames
-                            spriteFrames = data.upSpriteFrames
-                        } else if (data.direction === SpriteDirection.RIGHT) {
-                            frames = data.rightFrames
-                            spriteFrames = data.rightSpriteFrames
-                        } else if (data.direction === SpriteDirection.DOWN) {
-                            frames = data.downFrames
-                            spriteFrames = data.downSpriteFrames
-                        } else if (data.direction === SpriteDirection.LEFT) {
-                            frames = data.leftFrames
-                            spriteFrames = data.leftSpriteFrames
+                        if (data.attack.direction === SpriteDirection.UP) {
+                            frames = data.attack.upFrames
+                            spriteFrames = data.attack.upSpriteFrames
+                        } else if (data.attack.direction === SpriteDirection.RIGHT) {
+                            frames = data.attack.rightFrames
+                            spriteFrames = data.attack.rightSpriteFrames
+                        } else if (data.attack.direction === SpriteDirection.DOWN) {
+                            frames = data.attack.downFrames
+                            spriteFrames = data.attack.downSpriteFrames
+                        } else if (data.attack.direction === SpriteDirection.LEFT) {
+                            frames = data.attack.leftFrames
+                            spriteFrames = data.attack.leftSpriteFrames
                         }
-                        data.elaspedTime += game.eventContext().deltaTimeMillis
-                        if (data.elaspedTime - data.lastUpdated > data.frameInterval) {
-                            data.lastUpdated = data.elaspedTime
-                            data.lastFrame += 1
-                            if (data.lastFrame === 0) {
-                                if (data.attackingSprite) data.attackingSprite.destroy()
-                                data.attackingSprite = sprites.create(frames[0], kind)
-                                data.attackingSprite.z = data.sprite.z - 1
+                        data.attack.elaspedTime += game.eventContext().deltaTimeMillis
+                        if (data.attack.elaspedTime - data.attack.lastUpdated > data.attack.frameInterval) {
+                            data.attack.lastUpdated = data.attack.elaspedTime
+                            data.attack.lastFrame += 1
+                            if (data.attack.lastFrame === 0) {
+                                if (data.attack.attackingSprite) data.attack.attackingSprite.destroy()
+                                data.attack.attackingSprite = sprites.create(frames[0], kind)
+                                data.attack.attackingSprite.z = data.sprite.z - 1
                                 let x = data.sprite.x
                                 let y = data.sprite.y
-                                if (data.direction === SpriteDirection.UP) {
-                                    y = data.sprite.top - data.offset
-                                } else if (data.direction === SpriteDirection.RIGHT) {
-                                    x = data.sprite.right + data.offset
-                                } else if (data.direction === SpriteDirection.DOWN) {
-                                    y = data.sprite.bottom + data.offset
-                                } else if (data.direction === SpriteDirection.LEFT) {
-                                    x = data.sprite.left - data.offset
+                                if (data.attack.direction === SpriteDirection.UP) {
+                                    y = data.sprite.top - data.attack.offset
+                                } else if (data.attack.direction === SpriteDirection.RIGHT) {
+                                    x = data.sprite.right + data.attack.offset
+                                } else if (data.attack.direction === SpriteDirection.DOWN) {
+                                    y = data.sprite.bottom + data.attack.offset
+                                } else if (data.attack.direction === SpriteDirection.LEFT) {
+                                    x = data.sprite.left - data.attack.offset
                                 }
                             }
-                            if (data.lastFrame < frames.length) {
-                                const image = frames[data.lastFrame]
-                                if (data.attackingSprite.image !== image) {
-                                    data.attackingSprite.setImage(image)
+                            if (data.attack.lastFrame < frames.length) {
+                                const image = frames[data.attack.lastFrame]
+                                if (data.attack.attackingSprite.image !== image) {
+                                    data.attack.attackingSprite.setImage(image)
                                 }
                                 if (spriteFrames && spriteFrames.length > 1) {
-                                    const image = spriteFrames[data.lastFrame]
+                                    const image = spriteFrames[data.attack.lastFrame]
                                     if (data.sprite.image !== image) {
                                         data.sprite.setImage(image)
                                     }
                                 }
-                                data.attackingSprite.setPosition(data.sprite.x, data.sprite.y)
+                                data.attack.attackingSprite.setPosition(data.sprite.x, data.sprite.y)
                             } else {
-                                if (data.attackingSprite) data.attackingSprite.destroy()
+                                if (data.attack.attackingSprite) data.attack.attackingSprite.destroy()
                                 if (spriteFrames && spriteFrames.length > 1) {
                                     const image = spriteFrames[0]
                                     data.sprite.setImage(image)
                                 }
-                                data.attacking = false
+                                data.attack.attacking = false
                             }
                         }
                     }
@@ -342,25 +347,27 @@ namespace dungeon_pack {
         }
         spriteDicts[sprite.id] = {
             sprite: sprite,
-            attackingSprite: null,
-            kind: kind,
-            elaspedTime: 0,
-            frameInterval: frameInterval,
-            offset: offset,
-            currentFrames: [sprite.image],
-            attacking: false,
-            direction: SpriteDirection.DOWN,
-            lastFrame: -1,
-            lastUpdated: 0,
-            upFrames: upFrames,
-            rightFrames: rightFrames,
-            downFrames: downFrames,
-            leftFrames: leftFrames,
-            upSpriteFrames: upSpriteFrames,
-            rightSpriteFrames: rightSpriteFrames,
-            downSpriteFrames: downSpriteFrames,
-            leftSpriteFrames: leftSpriteFrames
-        } as SpriteAttackAnimationData
+            attack: {
+                attackingSprite: null,
+                kind: kind,
+                elaspedTime: 0,
+                frameInterval: frameInterval,
+                offset: offset,
+                currentFrames: [sprite.image],
+                attacking: false,
+                direction: SpriteDirection.DOWN,
+                lastFrame: -1,
+                lastUpdated: 0,
+                upFrames: upFrames,
+                rightFrames: rightFrames,
+                downFrames: downFrames,
+                leftFrames: leftFrames,
+                upSpriteFrames: upSpriteFrames,
+                rightSpriteFrames: rightSpriteFrames,
+                downSpriteFrames: downSpriteFrames,
+                leftSpriteFrames: leftSpriteFrames
+            }
+        } as SpriteAnimationData
         /*
         sprite.onDestroyed(() => {
             delete spriteDicts[sprite.id]
