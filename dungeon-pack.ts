@@ -13,50 +13,56 @@ namespace dungeon_pack {
         LEFT
     }
 
+    type AngleData = {
+        direction: SpriteDirection,
+        value: number,
+        active: boolean
+    }
+
+    type MoveData = {
+        elaspedTime: number,
+        frameInterval: number,
+        direction: SpriteDirection,
+        currentFrames: Image[],
+        upFrames: Image[],
+        upLastFrame: number,
+        upLastUpdated: number,
+        rightFrames: Image[],
+        rightLastFrame: number,
+        rightLastUpdated: number,
+        downFrames: Image[],
+        downLastFrame: number,
+        downLastUpdated: number,
+        leftFrames: Image[],
+        leftLastFrame: number,
+        leftLastUpdated: number
+    }
+
+    type AttackData = {
+        attackingSprite: Sprite | null,
+        kind: number,
+        elaspedTime: number,
+        frameInterval: number,
+        offset: number,
+        attacking: boolean,
+        direction: SpriteDirection,
+        lastFrame: number,
+        lastUpdated: number,
+        upFrames: Image[],
+        rightFrames: Image[],
+        downFrames: Image[],
+        leftFrames: Image[],
+        upSpriteFrames: Image[],
+        rightSpriteFrames: Image[],
+        downSpriteFrames: Image[],
+        leftSpriteFrames: Image[]
+    }
+
     type SpriteAnimationData = {
         sprite: Sprite,
-        angle?: {
-            direction: SpriteDirection,
-            value: number,
-            active: boolean
-        },
-        move?: {
-            elaspedTime: number,
-            frameInterval: number,
-            direction: SpriteDirection,
-            currentFrames: Image[],
-            upFrames: Image[],
-            upLastFrame: number,
-            upLastUpdated: number,
-            rightFrames: Image[],
-            rightLastFrame: number,
-            rightLastUpdated: number,
-            downFrames: Image[],
-            downLastFrame: number,
-            downLastUpdated: number,
-            leftFrames: Image[],
-            leftLastFrame: number,
-            leftLastUpdated: number
-        },
-        attack?: {
-            attackingSprite: Sprite | null,
-            kind: number,
-            elaspedTime: number,
-            frameInterval: number,
-            offset: number,
-            attacking: boolean,
-            direction: SpriteDirection,
-            lastFrame: number,
-            lastUpdated: number,
-            upFrames: Image[],
-            rightFrames: Image[],
-            downFrames: Image[],
-            leftFrames: Image[],
-            upSpriteFrames: Image[],
-            rightSpriteFrames: Image[],
-            downSpriteFrames: Image[],
-            leftSpriteFrames: Image[]
-        }
+        angle?: AngleData,
+        move?: MoveData,
+        attack?: AttackData
     }
 
 
@@ -105,14 +111,19 @@ namespace dungeon_pack {
         sprite.onDestroyed(() => {
             spriteDicts[sprite.id].active = false
         })
-        spriteDicts[sprite.id] = {
-            sprite: sprite,
-            angle: {
-                direction: SpriteDirection.DOWN,
-                value: Math.PI * 0.5,
-                active: true
-            }
-        } as SpriteAnimationData
+        const data = {
+            direction: SpriteDirection.DOWN,
+            value: Math.PI * 0.5,
+            active: true
+        } as AngleData
+        if (spriteDicts[sprite.id]) {
+            spriteDicts[sprite.id].angle = data
+        } else {
+            spriteDicts[sprite.id] = {
+                sprite: sprite,
+                angle: data
+            } as SpriteAnimationData
+        }
     }
 
     /**
@@ -197,28 +208,33 @@ namespace dungeon_pack {
             delete spriteDicts[sprite.id]
         })
         */
-        spriteDicts[sprite.id] = {
-            sprite: sprite,
-            move: {
-                elaspedTime: 0,
-                frameInterval: frameInterval,
-                direction: SpriteDirection.DOWN,
-                currentFrames: [sprite.image],
-                upFrames: upFrames,
-                upLastFrame: 0,
-                upLastUpdated: 0,
-                rightFrames: rightFrames,
-                rightLastFrame: 0,
-                rightLastUpdated: 0,
-                downFrames: downFrames,
-                downLastFrame: 0,
-                downLastUpdated: 0,
-                leftFrames: leftFrames,
-                leftLastFrame: 0,
-                leftLastUpdated: 0
+        const data = {
+            elaspedTime: 0,
+            frameInterval: frameInterval,
+            direction: SpriteDirection.DOWN,
+            currentFrames: [sprite.image],
+            upFrames: upFrames,
+            upLastFrame: 0,
+            upLastUpdated: 0,
+            rightFrames: rightFrames,
+            rightLastFrame: 0,
+            rightLastUpdated: 0,
+            downFrames: downFrames,
+            downLastFrame: 0,
+            downLastUpdated: 0,
+            leftFrames: leftFrames,
+            leftLastFrame: 0,
+            leftLastUpdated: 0
 
-            }
-        } as SpriteAnimationData
+        } as MoveData
+        if (spriteDicts[sprite.id]) {
+            spriteDicts[sprite.id].move = data
+        } else {
+            spriteDicts[sprite.id] = {
+                sprite: sprite,
+                move: data
+            } as SpriteAnimationData
+        }
     }
 
     /**
@@ -345,29 +361,34 @@ namespace dungeon_pack {
                 }
             })
         }
-        spriteDicts[sprite.id] = {
-            sprite: sprite,
-            attack: {
-                attackingSprite: null,
-                kind: kind,
-                elaspedTime: 0,
-                frameInterval: frameInterval,
-                offset: offset,
-                currentFrames: [sprite.image],
-                attacking: false,
-                direction: SpriteDirection.DOWN,
-                lastFrame: -1,
-                lastUpdated: 0,
-                upFrames: upFrames,
-                rightFrames: rightFrames,
-                downFrames: downFrames,
-                leftFrames: leftFrames,
-                upSpriteFrames: upSpriteFrames,
-                rightSpriteFrames: rightSpriteFrames,
-                downSpriteFrames: downSpriteFrames,
-                leftSpriteFrames: leftSpriteFrames
-            }
-        } as SpriteAnimationData
+        const data = {
+            attackingSprite: null,
+            kind: kind,
+            elaspedTime: 0,
+            frameInterval: frameInterval,
+            offset: offset,
+            currentFrames: [sprite.image],
+            attacking: false,
+            direction: SpriteDirection.DOWN,
+            lastFrame: -1,
+            lastUpdated: 0,
+            upFrames: upFrames,
+            rightFrames: rightFrames,
+            downFrames: downFrames,
+            leftFrames: leftFrames,
+            upSpriteFrames: upSpriteFrames,
+            rightSpriteFrames: rightSpriteFrames,
+            downSpriteFrames: downSpriteFrames,
+            leftSpriteFrames: leftSpriteFrames
+        } as AttackData
+        if (spriteDicts[sprite.id]) {
+            spriteDicts[sprite.id].attack = data
+        } else {
+            spriteDicts[sprite.id] = {
+                sprite: sprite,
+                attack: data
+            } as SpriteAnimationData
+        }
         /*
         sprite.onDestroyed(() => {
             delete spriteDicts[sprite.id]
@@ -507,16 +528,16 @@ namespace dungeon_pack {
     //% weight=93
     export function onHPStatusBarZero(handler: (sprite: Sprite, kind: number) => void) {
         const dataKey = `${stateNamespace}_on_hp_zero`
-        let handlers = game.currentScene().data[dataKey] as ((sprite: Sprite, kind: number) => void)[]
+        let handlers = game.currentScene().data[dataKey] as ((sprite: Sprite, spriteKind: number) => void)[]
         if (!handlers) {
-            handlers = game.currentScene().data[dataKey] = [] as ((sprite: Sprite, kind: number) => void)[]
+            handlers = game.currentScene().data[dataKey] = [] as ((sprite: Sprite, spriteKind: number) => void)[]
         }
         handlers.push(handler)
     }
 
     statusbars.onZero(StatusBarKind.Health, (statusbar: StatusBarSprite) => {
         const dataKey = `${stateNamespace}_on_hp_zero`
-        const handlers = (game.currentScene().data[dataKey] || []) as ((sprite: Sprite, kind: number) => void)[]
+        const handlers = (game.currentScene().data[dataKey] || []) as ((sprite: Sprite, spriteKind: number) => void)[]
         for (let i = 0; i < handlers.length; i++) {
             const handler = handlers[i]
             const sprite = statusbar.spriteAttachedTo()
