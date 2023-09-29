@@ -1,4 +1,4 @@
-// meta={"simUrl":"https://trg-arcade.userpxt.io/v1.12.41/---simulator","cdnUrl":"https://pxt.azureedge.net","version":"1.6.1","target":"arcade","targetVersion":"1.12.41","repo":"kojima/pxt-dungeon-pack"}
+// meta={"simUrl":"https://trg-arcade.userpxt.io/v1.12.41/---simulator","cdnUrl":"https://pxt.azureedge.net","version":"1.6.2","target":"arcade","targetVersion":"1.12.41","repo":"kojima/pxt-dungeon-pack"}
 // total=1312763 new=6.07% cached=88.02% other=5.91%
 (function (ectx) {
 'use strict';
@@ -456,7 +456,7 @@ const pxsim_pxtrt = pxsim.pxtrt;
 const pxsim_numops = pxsim.numops;
 
 
-function _main___P475634(s) {
+function _main___P486962(s) {
 let r0 = s.r0, step = s.pc;
 s.pc = -1;
 
@@ -924,10 +924,10 @@ switch (step) {
     s.tmp_0 = r0;
     r0 = pxsim_String__concat(s.tmp_0, "_ON_DISPLAY_UPDATE");
     globals.POST_PROCESS_HANDLERS_KEY___362563 = (r0);
-    globals.stateNamespace___473863 = ("__dungeon_pack");
+    globals.stateNamespace___485505 = ("__dungeon_pack");
     s.tmp_0 = statusbars_onZero__P359889_mk(s);
     s.tmp_0.arg0 = globals.Health___359827;
-    s.tmp_0.arg1 = dungeon_pack_inline__P474999;
+    s.tmp_0.arg1 = dungeon_pack_inline__P486650;
     s.callLocIdx = 73; s.pc = 46; return s.tmp_0;
   case 46:
     r0 = s.retval;
@@ -935,13 +935,13 @@ switch (step) {
     return leave(s, r0)
   default: oops()
 } } }
-_main___P475634.info = {"start":0,"length":0,"line":0,"column":0,"endLine":0,"endColumn":0,"fileName":"main.ts","functionName":"<main>","argumentNames":[]}
-_main___P475634.continuations = [ 42,43,44,45 ]
+_main___P486962.info = {"start":0,"length":0,"line":0,"column":0,"endLine":0,"endColumn":0,"fileName":"main.ts","functionName":"<main>","argumentNames":[]}
+_main___P486962.continuations = [ 42,43,44,45 ]
 
-function _main___P475634_mk(s) {
+function _main___P486962_mk(s) {
     checkStack(s.depth);
     return {
-        parent: s, fn: _main___P475634, depth: s.depth + 1,
+        parent: s, fn: _main___P486962, depth: s.depth + 1,
         pc: 0, retval: undefined, r0: undefined, overwrittenPC: false, lambdaArgs: null,
   tmp_0: undefined,
   tmp_1: undefined,
@@ -1480,7 +1480,7 @@ function gameOverConfig_inline__P360483_mk(s) {
 
 
 
-function dungeon_pack_inline__P474999(s) {
+function dungeon_pack_inline__P486650(s) {
 let r0 = s.r0, step = s.pc;
 s.pc = -1;
 
@@ -1490,30 +1490,30 @@ if (yieldSteps-- < 0 && maybeYield(s, step, r0) || runtime !== pxsim.runtime) re
 switch (step) {
   case 0:
 
-    s.dataKey___475001 = undefined;
-    s.handlers___475009 = undefined;
-    s.i___475018 = undefined;
-    s.handler___475024 = undefined;
-    s.sprite___475028 = undefined;
+    s.dataKey___486652 = undefined;
+    s.handlers___486660 = undefined;
+    s.i___486669 = undefined;
+    s.handler___486675 = undefined;
+    s.sprite___486679 = undefined;
     if (s.lambdaArgs) {
       s.arg0 = (s.lambdaArgs[0]);
       s.lambdaArgs = null;
     }
     r0 = pxsim_String_.mkEmpty();
     s.tmp_1 = r0;
-    if ((globals.stateNamespace___473863) && (globals.stateNamespace___473863).vtable) {
+    if ((globals.stateNamespace___485505) && (globals.stateNamespace___485505).vtable) {
     setupResume(s, 5);
-    pxsim_String__stringConv(globals.stateNamespace___473863);
+    pxsim_String__stringConv(globals.stateNamespace___485505);
     checkResumeConsumed();
     return;
-    } else { s.retval = (globals.stateNamespace___473863) + ""; }
+    } else { s.retval = (globals.stateNamespace___485505) + ""; }
   case 5:
     r0 = s.retval;
     s.tmp_2 = r0;
     r0 = pxsim_String__concat(s.tmp_1, s.tmp_2);
     s.tmp_0 = r0;
     r0 = pxsim_String__concat(s.tmp_0, "_on_hp_zero");
-    s.dataKey___475001 = (r0);
+    s.dataKey___486652 = (r0);
     s.tmp_3 = game_currentScene__P358481_mk(s);
     s.callLocIdx = 68; s.pc = 6; return s.tmp_3;
   case 6:
@@ -1521,7 +1521,7 @@ switch (step) {
     s.tmp_2 = r0;
     r0 = s.tmp_2.fields["_data"];
     s.tmp_1 = r0;
-    r0 = pxsim_pxtrt.mapGetGeneric(s.tmp_1, s.dataKey___475001);
+    r0 = pxsim_pxtrt.mapGetGeneric(s.tmp_1, s.dataKey___486652);
     s.tmp_0 = r0;
     r0 = pxsim_numops_toBool(s.tmp_0);
     if (!r0) { step = 1; continue; }
@@ -1532,58 +1532,58 @@ switch (step) {
   case 2:
     // jmp value (already in r0)
     s.tmp_4 = r0;
-    s.handlers___475009 = (s.tmp_4);
-    s.i___475018 = (0);
+    s.handlers___486660 = (s.tmp_4);
+    s.i___486669 = (0);
   case 3:
-    s.tmp_1 = r0 = s.i___475018;
-    r0 = pxsim_Array__length(s.handlers___475009);
+    s.tmp_1 = r0 = s.i___486669;
+    r0 = pxsim_Array__length(s.handlers___486660);
     s.tmp_2 = r0;
     r0 = (s.tmp_1 < s.tmp_2);
     s.tmp_0 = r0;
     r0 = pxsim_numops_toBoolDecr(s.tmp_0);
     if (!r0) { step = 4; continue; }
-    r0 = pxsim_Array__getAt(s.handlers___475009, s.i___475018);
-    s.handler___475024 = (r0);
+    r0 = pxsim_Array__getAt(s.handlers___486660, s.i___486669);
+    s.handler___486675 = (r0);
     s.tmp_0 = StatusBarSprite_spriteAttachedTo__P359838_mk(s);
     s.tmp_0.arg0 = s.arg0;
     s.callLocIdx = 70; s.pc = 7; return s.tmp_0;
   case 7:
     r0 = s.retval;
-    s.sprite___475028 = (r0);
+    s.sprite___486679 = (r0);
     s.tmp_0 = lambda_3_mk(s);
-    s.tmp_0.argL = s.handler___475024;
-    s.tmp_0.arg0 = s.sprite___475028;
-    r0 = s.sprite___475028.fields["_kind"];
+    s.tmp_0.argL = s.handler___486675;
+    s.tmp_0.arg0 = s.sprite___486679;
+    r0 = s.sprite___486679.fields["_kind"];
     s.tmp_0.arg1 = r0;
     setupLambda(s.tmp_0, s.tmp_0.argL);
     s.callLocIdx = 72; s.pc = 8; return s.tmp_0;
   case 8:
     r0 = s.retval;
-    r0 = (s.i___475018 + 1);
-    s.i___475018 = (r0);
+    r0 = (s.i___486669 + 1);
+    s.i___486669 = (r0);
     { step = 3; continue; }
   case 4:
     r0 = undefined;
     return leave(s, r0)
   default: oops()
 } } }
-dungeon_pack_inline__P474999.info = {"start":21997,"length":409,"line":508,"column":44,"endLine":516,"endColumn":5,"fileName":"dungeon-pack.ts","functionName":"inline","argumentNames":["statusbar"]}
+dungeon_pack_inline__P486650.info = {"start":22089,"length":409,"line":509,"column":44,"endLine":517,"endColumn":5,"fileName":"dungeon-pack.ts","functionName":"inline","argumentNames":["statusbar"]}
 
-function dungeon_pack_inline__P474999_mk(s) {
+function dungeon_pack_inline__P486650_mk(s) {
     checkStack(s.depth);
     return {
-        parent: s, fn: dungeon_pack_inline__P474999, depth: s.depth + 1,
+        parent: s, fn: dungeon_pack_inline__P486650, depth: s.depth + 1,
         pc: 0, retval: undefined, r0: undefined, overwrittenPC: false, lambdaArgs: null,
   tmp_0: undefined,
   tmp_1: undefined,
   tmp_2: undefined,
   tmp_3: undefined,
   tmp_4: undefined,
-  dataKey___475001: undefined,
-  handlers___475009: undefined,
-  i___475018: undefined,
-  handler___475024: undefined,
-  sprite___475028: undefined,
+  dataKey___486652: undefined,
+  handlers___486660: undefined,
+  i___486669: undefined,
+  handler___486675: undefined,
+  sprite___486679: undefined,
   arg0: undefined,
 } }
 
@@ -44219,7 +44219,7 @@ const sprites_BaseSpriteSayRenderer__C357741_VT = mkVTable({
   },
 });
 
-const breakpoints = setupDebugger(1, ["stateNamespace___473863"])
+const breakpoints = setupDebugger(1, ["stateNamespace___485505"])
 
-return _main___P475634
+return _main___P486962
 })

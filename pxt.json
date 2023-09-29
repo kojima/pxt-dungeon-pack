@@ -1,6 +1,6 @@
 {
     "name": "pxt-dungeon-pack",
-    "version": "1.6.1",
+    "version": "1.6.2",
     "description": "",
     "dependencies": {
         "device": "*",
