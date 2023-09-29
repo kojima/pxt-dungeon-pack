@@ -54,7 +54,11 @@ namespace dungeon_pack {
         upFrames: Image[],
         rightFrames: Image[],
         downFrames: Image[],
-        leftFrames: Image[]
+        leftFrames: Image[],
+        upSpriteFrames: Image[],
+        rightSpriteFrames: Image[],
+        downSpriteFrames: Image[],
+        leftSpriteFrames: Image[]
     }
 
 
@@ -215,11 +219,17 @@ namespace dungeon_pack {
     /**
      * 攻撃アニメーションを設定する
      */
-    //% block="攻撃アニメーションを設定する $sprite=variables_get(mySprite) 上方向 $upFrames=animation_editor 右方向 $rightFrames=animation_editor 下方向 $downFrames=animation_editor 左方向 $leftFrames=animation_editor 武器タイプ %kind=spritekind オフセット (px) %offset フレーム間隔 (ms) $frameInterval=timePicker"
+    //% block="攻撃アニメーションを設定する $sprite=variables_get(mySprite) 上方向 $upFrames=animation_editor 右方向 $rightFrames=animation_editor 下方向 $downFrames=animation_editor 左方向 $leftFrames=animation_editor 武器タイプ %kind=spritekind オフセット (px) %offset フレーム間隔 (ms) $frameInterval=timePicker || スプライト上方向　$upSpriteFrames=animation_editor スプライト右方向　$rightSpriteFrames=animation_editor スプライト下方向　$downSpriteFrames=animation_editor スプライト左方向　$leftSpriteFrames=animation_editor"
     //% offset.defl=0
     //% frameInterval.defl=100
+    //% upSpriteFrames.defl=[]
+    //% rightSpriteFrames.defl=[]
+    //% downSpriteFrames.defl=[]
+    //% leftSpriteFrames.defl=[]
+    //% expandableArgumentMode="toggle"
     //% weight=99
-    export function setAttackAnimation(sprite: Sprite, upFrames: Image[], rightFrames: Image[], downFrames: Image[], leftFrames: Image[], kind: number, offset: number, frameInterval?: number) {
+    export function setAttackAnimation(sprite: Sprite, upFrames: Image[], rightFrames: Image[], downFrames: Image[], leftFrames: Image[], kind: number, offset: number, frameInterval: number,
+        upSpriteFrames?: Image[], rightSpriteFrames?: Image[], downSpriteFrames?: Image[], leftSpriteFrames?: Image[]) {
         if (!sprite) return
 
         const dataKey = `${stateNamespace}_attack`
@@ -247,6 +257,7 @@ namespace dungeon_pack {
                         }
                     }
                     if (data.attacking && data.attackingSprite) {
+                        data.sprite.setVelocity(0, 0)
                         let x = data.sprite.x
                         let y = data.sprite.y
                         if (data.direction === SpriteDirection.UP) {
@@ -270,14 +281,19 @@ namespace dungeon_pack {
                     const sprite = data.sprite
                     if (data.attacking) {
                         let frames: Image[] = []
+                        let spriteFrames: Image[] = []
                         if (data.direction === SpriteDirection.UP) {
                             frames = data.upFrames
+                            spriteFrames = data.upSpriteFrames
                         } else if (data.direction === SpriteDirection.RIGHT) {
                             frames = data.rightFrames
+                            spriteFrames = data.rightSpriteFrames
                         } else if (data.direction === SpriteDirection.DOWN) {
                             frames = data.downFrames
+                            spriteFrames = data.downSpriteFrames
                         } else if (data.direction === SpriteDirection.LEFT) {
                             frames = data.leftFrames
+                            spriteFrames = data.leftSpriteFrames
                         }
                         data.elaspedTime += game.eventContext().deltaTimeMillis
                         if (data.elaspedTime - data.lastUpdated > data.frameInterval) {
@@ -305,8 +321,18 @@ namespace dungeon_pack {
                                 if (data.attackingSprite.image !== image) {
                                     data.attackingSprite.setImage(image)
                                 }
+                                if (spriteFrames && spriteFrames.length > 1) {
+                                    const image = spriteFrames[data.lastFrame]
+                                    if (data.sprite.image !== image) {
+                                        data.sprite.setImage(image)
+                                    }
+                                }
                             } else {
                                 if (data.attackingSprite) data.attackingSprite.destroy()
+                                if (spriteFrames && spriteFrames.length > 1) {
+                                    const image = spriteFrames[0]
+                                    data.sprite.setImage(image)
+                                }
                                 data.attacking = false
                             }
                         }
@@ -329,7 +355,11 @@ namespace dungeon_pack {
             upFrames: upFrames,
             rightFrames: rightFrames,
             downFrames: downFrames,
-            leftFrames: leftFrames
+            leftFrames: leftFrames,
+            upSpriteFrames: upSpriteFrames,
+            rightSpriteFrames: rightSpriteFrames,
+            downSpriteFrames: downSpriteFrames,
+            leftSpriteFrames: leftSpriteFrames
         } as SpriteAttackAnimationData
         /*
         sprite.onDestroyed(() => {
@@ -353,7 +383,7 @@ namespace dungeon_pack {
             spriteDicts = game.currentScene().data[dataKey] = {}
         }
         const data = spriteDicts[sprite.id]
-        if (!data) return
+        if (!data || data.attacking) return
 
         data.attacking = true
         data.lastFrame = -1
@@ -468,18 +498,18 @@ namespace dungeon_pack {
     //% draggableParameters="reporter"
     //% group="HPステータスバー"
     //% weight=93
-    export function onHPStatusBarZero(handler: (sprite: Sprite, type: number) => void) {
+    export function onHPStatusBarZero(handler: (sprite: Sprite, kind: number) => void) {
         const dataKey = `${stateNamespace}_on_hp_zero`
-        let handlers = game.currentScene().data[dataKey] as ((sprite: Sprite, type: number) => void)[]
+        let handlers = game.currentScene().data[dataKey] as ((sprite: Sprite, kind: number) => void)[]
         if (!handlers) {
-            handlers = game.currentScene().data[dataKey] = [] as ((sprite: Sprite, type: number) => void)[]
+            handlers = game.currentScene().data[dataKey] = [] as ((sprite: Sprite, kind: number) => void)[]
         }
         handlers.push(handler)
     }
 
     statusbars.onZero(StatusBarKind.Health, (statusbar: StatusBarSprite) => {
         const dataKey = `${stateNamespace}_on_hp_zero`
-        const handlers = (game.currentScene().data[dataKey] || []) as ((sprite: Sprite, type: number) => void)[]
+        const handlers = (game.currentScene().data[dataKey] || []) as ((sprite: Sprite, kind: number) => void)[]
         for (let i = 0; i < handlers.length; i++) {
             const handler = handlers[i]
             const sprite = statusbar.spriteAttachedTo()
