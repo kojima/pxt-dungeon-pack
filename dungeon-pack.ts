@@ -257,7 +257,6 @@ namespace dungeon_pack {
                         }
                     }
                     if (data.attacking && data.attackingSprite) {
-                        data.sprite.setVelocity(0, 0)
                         let x = data.sprite.x
                         let y = data.sprite.y
                         if (data.direction === SpriteDirection.UP) {
@@ -314,7 +313,6 @@ namespace dungeon_pack {
                                 } else if (data.direction === SpriteDirection.LEFT) {
                                     x = data.sprite.left - data.offset
                                 }
-                                data.attackingSprite.setPosition(x, y)
                             }
                             if (data.lastFrame < frames.length) {
                                 const image = frames[data.lastFrame]
@@ -327,6 +325,7 @@ namespace dungeon_pack {
                                         data.sprite.setImage(image)
                                     }
                                 }
+                                data.attackingSprite.setPosition(data.sprite.x, data.sprite.y)
                             } else {
                                 if (data.attackingSprite) data.attackingSprite.destroy()
                                 if (spriteFrames && spriteFrames.length > 1) {
