@@ -513,25 +513,48 @@ namespace dungeon_pack {
     //% offset.defl=4
     //% group="HPステータスバー"
     //% weight=95
-    export function setHPStatusBar(sprite: Sprite, width: number = 20, height: number = 4, offset: number = 4) {
+    export function setHPStatusBarToSprite(sprite: Sprite, width: number = 20, height: number = 4, offset: number = 4) {
         let statusbar = statusbars.create(width, height, StatusBarKind.Health)
         statusbar.attachToSprite(sprite)
         statusbar.setOffsetPadding(0, offset)
     }
 
-
-
     /**
-     * スプライトにHPダメージを与える
+     * HPステータスバーをスプライトタイプに設定する
      */
-    //% block="スプライト%sprite=variables_get(mySprite) に%damage のHPダメージを与える"
-    //% damage.defl=10
+    //% block="HPステータスバーをスプライトタイプ %kind=spritekind に設定する || (幅: %width , 高さ: %height, オフセット: %offset)"
+    //% expandableArgumentMode="toggle"
+    //% inlineInputMode=inline
+    //% width.defl=20
+    //% height.defl=4
+    //% offset.defl=4
     //% group="HPステータスバー"
     //% weight=94
-    export function changeHPStatusBar(sprite: Sprite, damage: number = 10) {
+    export function setHPStatusBarToSpriteKind(kind: number, width: number = 20, height: number = 4, offset: number = 4) {
+        const allSprites = sprites.allOfKind(kind)
+        for (let i = 0; i < allSprites.length; i++) {
+            const sprite = allSprites[i]
+            let statusbar = statusbars.create(width, height, StatusBarKind.Health)
+            statusbar.attachToSprite(sprite)
+            statusbar.setOffsetPadding(0, offset)
+        }
+    }
+
+    /**
+     * スプライトのHPステータスバーの値を変える
+     */
+    //% block="スプライト%sprite=variables_get(mySprite) のHPステータスバーの値を%value だけ変える"
+    //% value.defl=-10
+    //% group="HPステータスバー"
+    //% weight=93
+    export function changeHPStatusBarValue(sprite: Sprite, value: number = -10) {
         let statusbar = statusbars.getStatusBarAttachedTo(StatusBarKind.Health, sprite)
-        if (statusbar && statusbar.value > 0) {
-            statusbar.value = Math.max(0, statusbar.value - damage)
+        if (statusbar) {
+            if (value > 0) {
+                statusbar.value = Math.min(100, statusbar.value + value)
+            } else {
+                statusbar.value = Math.max(0, statusbar.value + value)
+            }
         }
     }
 
@@ -541,7 +564,7 @@ namespace dungeon_pack {
     //% block="HPステータスバーがゼロになったとき"
     //% draggableParameters="reporter"
     //% group="HPステータスバー"
-    //% weight=93
+    //% weight=92
     export function onHPStatusBarZero(handler: (sprite: Sprite, kind: number) => void) {
         const dataKey = `${stateNamespace}_on_hp_zero`
         let handlers = game.currentScene().data[dataKey] as ((sprite: Sprite, spriteKind: number) => void)[]
