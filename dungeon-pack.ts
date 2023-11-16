@@ -624,6 +624,7 @@ namespace dungeon_pack {
             item.setFlag(SpriteFlag.RelativeToCamera, true)
             x += item.width * scale + gap
         })
+        spriteDicts[sprite.id] = data
     }
 
     /**
