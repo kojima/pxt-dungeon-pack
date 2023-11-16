@@ -639,7 +639,7 @@ namespace dungeon_pack {
 
         let spriteDicts = game.currentScene().data[dataKey]
         if (!spriteDicts) return false
-        let data = spriteDicts[sprite.id] as SpriteDungeonPackData | undefined
+        let data = spriteDicts[sprite.id] as SpriteDungeonPackData
         if (!data || !data.items) return false
 
         let hasItem = false
