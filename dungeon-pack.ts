@@ -638,11 +638,9 @@ namespace dungeon_pack {
         const dataKey = stateNamespace
 
         let spriteDicts = game.currentScene().data[dataKey]
-        if (!spriteDicts) {
-            spriteDicts = game.currentScene().data[dataKey] = {}
-        }
+        if (!spriteDicts) return false
         let data = spriteDicts[sprite.id] as SpriteDungeonPackData | undefined
-        if (!data || !data.items) return false;
+        if (!data || !data.items) return false
 
         let hasItem = false
         data.items.forEach((item: Sprite) => {
