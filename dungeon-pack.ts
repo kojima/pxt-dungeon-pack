@@ -616,11 +616,13 @@ namespace dungeon_pack {
 
         let x = 40
         const y = 8
+        const scale = 0.75
+        const gap = 4
         data.items.forEach((item: Sprite) => {
             item.setPosition(x, y)
-            item.setScale(0.75, ScaleAnchor.Middle)
+            item.setScale(scale, ScaleAnchor.Middle)
             item.setFlag(SpriteFlag.RelativeToCamera, true)
-            x += item.width + 4
+            x += item.width * scale + gap
         })
     }
 
