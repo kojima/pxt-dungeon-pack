@@ -64,11 +64,12 @@ namespace dungeon_pack {
         leftSpriteFrames: Image[]
     }
 
-    type SpriteAnimationData = {
+    type SpriteDungeonPackData = {
         sprite: Sprite,
         angle?: AngleData,
         move?: MoveData,
-        attack?: AttackData
+        attack?: AttackData,
+        items?: Sprite[]
     }
 
 
@@ -96,7 +97,7 @@ namespace dungeon_pack {
                 const spriteIds = Object.keys(spriteDicts)
                 for (let i = 0; i < spriteIds.length; i++) {
                     const spriteId = spriteIds[i]
-                    const data: SpriteAnimationData = spriteDicts[spriteId]
+                    const data: SpriteDungeonPackData = spriteDicts[spriteId]
                     if (!data.angle || data.angle.active) {
                         continue
                     }
@@ -136,7 +137,7 @@ namespace dungeon_pack {
             spriteDicts[sprite.id] = {
                 sprite: sprite,
                 angle: data
-            } as SpriteAnimationData
+            } as SpriteDungeonPackData
         }
     }
 
@@ -164,7 +165,7 @@ namespace dungeon_pack {
                 const spriteIds = Object.keys(spriteDicts)
                 for (let i = 0; i < spriteIds.length; i++) {
                     const spriteId = spriteIds[i]
-                    const data: SpriteAnimationData = spriteDicts[spriteId]
+                    const data: SpriteDungeonPackData = spriteDicts[spriteId]
                     const sprite = data.sprite
                     if (sprite.vx === 0 && sprite.vy === 0) {
                         if (data.attack && data.attack.attacking) continue
@@ -254,7 +255,7 @@ namespace dungeon_pack {
             spriteDicts[sprite.id] = {
                 sprite: sprite,
                 move: data
-            } as SpriteAnimationData
+            } as SpriteDungeonPackData
         }
     }
 
@@ -289,7 +290,7 @@ namespace dungeon_pack {
                 const spriteIds = Object.keys(spriteDicts)
                 for (let i = 0; i < spriteIds.length; i++) {
                     const spriteId = spriteIds[i]
-                    const data: SpriteAnimationData = spriteDicts[spriteId]
+                    const data: SpriteDungeonPackData = spriteDicts[spriteId]
                     const sprite = data.sprite
                     if (Math.abs(sprite.vx) > Math.abs(sprite.vy)) {
                         if (sprite.vx > 0) {
@@ -325,7 +326,7 @@ namespace dungeon_pack {
                 const spriteIds = Object.keys(spriteDicts)
                 for (let i = 0; i < spriteIds.length; i++) {
                     const spriteId = spriteIds[i]
-                    const data: SpriteAnimationData = spriteDicts[spriteId]
+                    const data: SpriteDungeonPackData = spriteDicts[spriteId]
                     const sprite = data.sprite
                     if (data.attack && data.attack.attacking) {
                         let frames: Image[] = []
@@ -403,7 +404,7 @@ namespace dungeon_pack {
             spriteDicts[sprite.id] = {
                 sprite: sprite,
                 attack: data
-            } as SpriteAnimationData
+            } as SpriteDungeonPackData
         }
         /*
         sprite.onDestroyed(() => {
@@ -426,7 +427,7 @@ namespace dungeon_pack {
         if (!spriteDicts) {
             spriteDicts = game.currentScene().data[dataKey] = {}
         }
-        const data = spriteDicts[sprite.id] as SpriteAnimationData
+        const data = spriteDicts[sprite.id] as SpriteDungeonPackData
         if (!data || data.attack.attacking) return
 
         data.attack.attacking = true
@@ -583,4 +584,68 @@ namespace dungeon_pack {
             handler(sprite, sprite.kind());
         }
     })
+
+    /**
+     * スプライトにアイテムを追加する
+     */
+    //% block="スプライト%sprite=variables_get(mySprite) にアイテム%item=variables_get(item)を追加する"
+    //% group="アイテム管理"
+    //% weight=89
+    export function addItemToSprite(sprite: Sprite, item: Sprite) {
+        if (!sprite || !item) return
+
+        const dataKey = stateNamespace
+
+        let spriteDicts = game.currentScene().data[dataKey]
+        if (!spriteDicts) {
+            spriteDicts = game.currentScene().data[dataKey] = {}
+        }
+        let data = spriteDicts[sprite.id] as SpriteDungeonPackData | undefined
+        if (data) {
+            if (data.items && data.items.indexOf(item) < 0) {
+                data.items.push(item)
+            } else {
+                data.items = [item]
+            }
+        } else {
+            data = {
+                sprite: sprite,
+                items: [item]
+            }
+        }
+
+        let x = 40
+        const y = 8
+        data.items.forEach((item: Sprite) => {
+            item.setPosition(x, y)
+            item.setScale(0.75, ScaleAnchor.Middle)
+            item.setFlag(SpriteFlag.RelativeToCamera, true)
+            x += item.width + 4
+        })
+    }
+
+    /**
+     * スプライトにアイテムがアイテムを保持しているかチェックする
+     */
+    //% block="スプライト%sprite=variables_get(mySprite) が%kind=spritekind タイプのアイテムを保持している"
+    //% group="アイテム管理"
+    //% weight=88
+    export function spriteHasItem(sprite: Sprite, kind: number): boolean {
+        if (!sprite) return false;
+
+        const dataKey = stateNamespace
+
+        let spriteDicts = game.currentScene().data[dataKey]
+        if (!spriteDicts) {
+            spriteDicts = game.currentScene().data[dataKey] = {}
+        }
+        let data = spriteDicts[sprite.id] as SpriteDungeonPackData | undefined
+        if (!data || !data.items) return false;
+
+        let hasItem = false
+        data.items.forEach((item: Sprite) => {
+            if (item.kind() === kind) hasItem = true
+        })
+        return hasItem
+    }
 }
