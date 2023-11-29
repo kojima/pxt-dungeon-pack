@@ -9,7 +9,8 @@ namespace dungeon_pack {
     type AnimationHandlers = {
         angleHandlerRegistered?: boolean,
         moveHandlerRegistered?: boolean,
-        attackHandlerRegistered?: boolean
+        attackHandlerRegistered?: boolean,
+        itemHandlerRegistered?: boolean,
     }
 
     enum SpriteDirection {
@@ -585,6 +586,24 @@ namespace dungeon_pack {
         }
     })
 
+    function alignItems(items: Sprite[]) {
+        const itemLeft = info.hasLife() ? Math.round(32 + (Math.log(info.life()) / Math.log(10) + 1) * 5) : 8
+        let x = itemLeft
+        let y = 8
+        const scale = 0.6
+        const gap = 6
+        items.forEach((item) => {
+            item.setPosition(x, y)
+            item.setScale(scale, ScaleAnchor.Middle)
+            item.setFlag(SpriteFlag.RelativeToCamera, true)
+            x += item.width * scale + gap
+            if (x > screen.width * 0.85) {
+                x = itemLeft
+                y += 12
+            }
+        })
+    }
+
     /**
      * スプライトにアイテムを追加する
      */
@@ -613,26 +632,51 @@ namespace dungeon_pack {
                 items: [item]
             }
         }
-
-        let x = 40
-        const y = 8
-        const scale = 0.75
-        const gap = 4
-        data.items.forEach((item: Sprite) => {
-            item.setPosition(x, y)
-            item.setScale(scale, ScaleAnchor.Middle)
-            item.setFlag(SpriteFlag.RelativeToCamera, true)
-            x += item.width * scale + gap
-        })
         spriteDicts[sprite.id] = data
+
+        let handlers = game.currentScene().data[`${stateNamespace}_handlers`] as AnimationHandlers
+        if (!handlers || !handlers.itemHandlerRegistered) {
+            if (!handlers) handlers = { itemHandlerRegistered: true }
+            else handlers.itemHandlerRegistered = true
+
+            game.eventContext().registerFrameHandler(scene.ANIMATION_UPDATE_PRIORITY, () => {
+                alignItems(data.items);
+            })
+        }
+        game.currentScene().data[`${stateNamespace}_handlers`] = handlers
     }
 
+
     /**
-     * スプライトにアイテムがアイテムを保持しているかチェックする
+     * スプライトにアイテムがアイテムを保持しているかチェックする (Spriteでチェックする)
+     */
+    //% block="スプライト%sprite=variables_get(mySprite) が%item=variables_get(item) をアイテムとして保持している"
+    //% group="アイテム管理"
+    //% weight=88
+    export function spriteHasSpriteItem(sprite: Sprite, itemSprite: Sprite): boolean {
+        if (!sprite || !itemSprite) return false;
+
+        const dataKey = stateNamespace
+
+        let spriteDicts = game.currentScene().data[dataKey]
+        if (!spriteDicts) return false
+        let data = spriteDicts[sprite.id] as SpriteDungeonPackData
+        if (!data || !data.items) return false
+
+        let hasItem = false
+        data.items.forEach((item: Sprite) => {
+            if (item === itemSprite) hasItem = true
+        })
+        return hasItem
+    }
+
+
+    /**
+     * スプライトがアイテムを保持しているかチェックする (kindでチェックする)
      */
     //% block="スプライト%sprite=variables_get(mySprite) が%kind=spritekind タイプのアイテムを保持している"
     //% group="アイテム管理"
-    //% weight=88
+    //% weight=87
     export function spriteHasItem(sprite: Sprite, kind: number): boolean {
         if (!sprite) return false;
 
@@ -648,5 +692,84 @@ namespace dungeon_pack {
             if (item.kind() === kind) hasItem = true
         })
         return hasItem
+    }
+
+
+    /**
+     * スプライトの保持アイテムからアイテムを削除する (Sprite指定)
+     */
+    //% block="スプライト%sprite=variables_get(mySprite) の保持アイテムからアイテム%itemSprite=variables_get(item) を削除する"
+    //% group="アイテム管理"
+    //% weight=86
+    export function deleteItemSprite(sprite: Sprite, itemSprite: Sprite): void {
+        if (!sprite) return
+
+        const dataKey = stateNamespace
+
+        let spriteDicts = game.currentScene().data[dataKey]
+        if (!spriteDicts) return
+        let data = spriteDicts[sprite.id] as SpriteDungeonPackData
+        if (!data || !data.items) return
+
+        const deleteIndex: number[] = [];
+        data.items.forEach((item: Sprite, index: number) => {
+            if (item === itemSprite) {
+                item.destroy()
+                deleteIndex.push(index)
+            }
+        })
+        deleteIndex.reverse()
+        for (const i of deleteIndex) {
+            data.items.splice(i, 1)
+        }
+        spriteDicts[sprite.id] = data
+    }
+
+
+    /**
+     * スプライトの保持アイテムからアイテムを削除する (kind指定)
+     */
+    //% block="スプライト%sprite=variables_get(mySprite) の保持アイテムから%kind=spritekind タイプのアイテムを削除する"
+    //% group="アイテム管理"
+    //% weight=85
+    export function deleteItem(sprite: Sprite, kind: number): void {
+        if (!sprite) return
+
+        const dataKey = stateNamespace
+
+        let spriteDicts = game.currentScene().data[dataKey]
+        if (!spriteDicts) return
+        let data = spriteDicts[sprite.id] as SpriteDungeonPackData
+        if (!data || !data.items) return
+
+        const deleteIndex: number[] = [];
+        data.items.forEach((item: Sprite, index: number) => {
+            if (item.kind() === kind) {
+                item.destroy()
+                deleteIndex.push(index)
+            }
+        })
+        deleteIndex.reverse()
+        for (const i of deleteIndex) {
+            data.items.splice(i, 1)
+        }
+
+        alignItems(data.items)
+        spriteDicts[sprite.id] = data
+    }
+
+
+    /**
+     * スプライトの上下左右のタイルの位置を取得する
+     */
+    //% block="スプライト%sprite=variables_get(mySprite) の%direction方向のタイルの位置"
+    //% group="タイルマップ"
+    //% weight=70
+    export function getTileAt(sprite: Sprite, direction: CollisionDirection): tiles.Location {
+        const tileMap = game.currentScene().tileMap
+        const loc = sprite.tilemapLocation()
+        const col = loc.col + (direction === CollisionDirection.Left ? -1 : (direction === CollisionDirection.Right ? 1 : 0))
+        const row = loc.row + (direction === CollisionDirection.Top ? -1 : (direction === CollisionDirection.Bottom ? 1 : 0))
+        return new tiles.Location(col, row, tileMap)
     }
 }
