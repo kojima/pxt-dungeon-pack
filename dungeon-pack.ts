@@ -483,6 +483,35 @@ namespace dungeon_pack {
     }
 
     /**
+     * 全方向に発射体を発射する
+     */
+    //% block="$sprite=variables_get(mySprite) から$count 方向に発射体$image=screen_image_picker (タイプ %kind=spritekind)を発射する || 速度$velocity オフセット (px) %offset 壁抜け%throughWalls"
+    //% inlineInputMode=inline
+    //% expandableArgumentMode="toggle"
+    //% count.defl=4
+    //% kind.defl=Projectile
+    //% velocity.defl=100
+    //% offset.defl=0
+    //% throughWalls.defl=false
+    //% weight=96
+    export function shootProjectileAllAround(sprite: Sprite, count: number, image: Image, kind: number, velocity?: number, offset?: number, throughWalls?: boolean) {
+        if (!sprite) return
+
+        for (let i = 0; i < count; i++) {
+            const angle = (2 * Math.PI) / count * i + (count % 2 === 0 ? 0 : -Math.PI * 0.5)
+            const offsetX = offset * Math.cos(angle)
+            const vx = velocity * Math.cos(angle)
+            const offsetY = offset * Math.sin(angle)
+            const vy = velocity * Math.sin(angle)
+            const projectile = sprites.create(image, kind)
+            projectile.setPosition(sprite.x + offsetX, sprite.y + offsetY)
+            projectile.setVelocity(vx, vy)
+            projectile.setFlag(SpriteFlag.GhostThroughWalls, throughWalls)
+            projectile.setFlag(SpriteFlag.DestroyOnWall, !throughWalls)
+        }
+    }
+
+    /**
      * タイル上にスプライトを生成する
      */
     //% block="スプライト%sprite=screen_image_picker (%kind=spritekind タイプ)をタイル%tile 上に生成する || (速度 vx:%vx , vy:%vy)"
@@ -492,7 +521,7 @@ namespace dungeon_pack {
     //% inlineInputMode=inline
     //% vx.defl=0
     //% vy.defl=0
-    //% weight=96
+    //% weight=95
     export function spawnSpritesOnTiles(sprite: Image, kind: number, tile: Image, vx: number = 0, vy: number = 0) {
         tiles.getTilesByType(tile).forEach(tLoc => {
             const s = sprites.create(sprite, kind)
@@ -514,7 +543,7 @@ namespace dungeon_pack {
     //% height.defl=4
     //% offset.defl=4
     //% group="HPステータスバー"
-    //% weight=95
+    //% weight=94
     export function setHPStatusBarToSprite(sprite: Sprite, width: number = 20, height: number = 4, offset: number = 4) {
         let statusbar = statusbars.create(width, height, StatusBarKind.Health)
         statusbar.attachToSprite(sprite)
@@ -531,7 +560,7 @@ namespace dungeon_pack {
     //% height.defl=4
     //% offset.defl=4
     //% group="HPステータスバー"
-    //% weight=94
+    //% weight=93
     export function setHPStatusBarToSpriteKind(kind: number, width: number = 20, height: number = 4, offset: number = 4) {
         const allSprites = sprites.allOfKind(kind)
         for (let i = 0; i < allSprites.length; i++) {
@@ -548,7 +577,7 @@ namespace dungeon_pack {
     //% block="スプライト%sprite=variables_get(mySprite) のHPステータスバーの値を%value だけ変える"
     //% value.defl=-10
     //% group="HPステータスバー"
-    //% weight=93
+    //% weight=92
     export function changeHPStatusBarValue(sprite: Sprite, value: number = -10) {
         let statusbar = statusbars.getStatusBarAttachedTo(StatusBarKind.Health, sprite)
         if (statusbar) {
@@ -566,7 +595,7 @@ namespace dungeon_pack {
     //% block="HPステータスバーがゼロになったとき"
     //% draggableParameters="reporter"
     //% group="HPステータスバー"
-    //% weight=92
+    //% weight=91
     export function onHPStatusBarZero(handler: (sprite: Sprite, kind: number) => void) {
         const dataKey = `${stateNamespace}_on_hp_zero`
         let handlers = game.currentScene().data[dataKey] as ((sprite: Sprite, spriteKind: number) => void)[]
