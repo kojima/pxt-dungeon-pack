@@ -260,6 +260,21 @@ namespace dungeon_pack {
         }
     }
 
+    function getAttackingSpritePosition(sprite: Sprite, direction: SpriteDirection, offset: number) {
+        let x = sprite.x
+        let y = sprite.y
+        if (direction === SpriteDirection.UP) {
+            y = sprite.y - offset
+        } else if (direction === SpriteDirection.RIGHT) {
+            x = sprite.x + offset
+        } else if (direction === SpriteDirection.DOWN) {
+            y = y + offset
+        } else if (direction === SpriteDirection.LEFT) {
+            x = x - offset
+        }
+        return {x: x, y: y}
+    }
+
     /**
      * 攻撃アニメーションを設定する
      */
@@ -307,19 +322,9 @@ namespace dungeon_pack {
                         }
                     }
                     if (data.attack && data.attack.attacking && data.attack.attackingSprite) {
-                        let x = data.sprite.x
-                        let y = data.sprite.y
-                        if (data.attack.direction === SpriteDirection.UP) {
-                            y = data.sprite.y - data.attack.offset
-                        } else if (data.attack.direction === SpriteDirection.RIGHT) {
-                            x = data.sprite.x + data.attack.offset
-                        } else if (data.attack.direction === SpriteDirection.DOWN) {
-                            y = data.sprite.y + data.attack.offset
-                        } else if (data.attack.direction === SpriteDirection.LEFT) {
-                            x = data.sprite.x - data.attack.offset
-                        }
+                        const pos = getAttackingSpritePosition(data.sprite, data.attack.direction, data.attack.offset)
                         data.sprite.setVelocity(0, 0)
-                        data.attack.attackingSprite.setPosition(x, y)
+                        data.attack.attackingSprite.setPosition(pos.x, pos.y)
                     }
                 }
             })
@@ -352,6 +357,8 @@ namespace dungeon_pack {
                             if (data.attack.lastFrame === 0) {
                                 if (data.attack.attackingSprite) data.attack.attackingSprite.destroy()
                                 data.attack.attackingSprite = sprites.create(frames[0], kind)
+                                const pos = getAttackingSpritePosition(data.sprite, data.attack.direction, data.attack.offset)
+                                data.attack.attackingSprite.setPosition(pos.x, pos.y)
                                 data.attack.attackingSprite.z = data.sprite.z - 1
                             }
                             if (data.attack.lastFrame < frames.length) {
