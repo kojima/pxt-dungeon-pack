@@ -4,7 +4,8 @@
     "description": "",
     "dependencies": {
         "device": "*",
-        "pxt-status-bar": "github:jwunderl/pxt-status-bar#v0.4.2"
+        "pxt-status-bar": "github:jwunderl/pxt-status-bar#v0.4.2",
+        "pxt-arcade-image-transform": "github:robo-technical-group/pxt-arcade-image-transform#v1.0.9"
     },
     "files": [
         "main.blocks",

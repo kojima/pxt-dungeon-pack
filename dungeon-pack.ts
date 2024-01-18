@@ -485,7 +485,7 @@ namespace dungeon_pack {
     /**
      * 全方向に発射体を発射する
      */
-    //% block="$sprite=variables_get(mySprite) から$count 方向に発射体$image=screen_image_picker (タイプ %kind=spritekind)を発射する || 速度$velocity オフセット (px) %offset 壁抜け%throughWalls"
+    //% block="$sprite=variables_get(mySprite) から$count 方向に発射体$image=screen_image_picker (タイプ %kind=spritekind)を発射する || 速度$velocity オフセット (px) %offset 壁抜け%throughWalls 回転%rotation"
     //% inlineInputMode=inline
     //% expandableArgumentMode="toggle"
     //% count.defl=4
@@ -493,12 +493,16 @@ namespace dungeon_pack {
     //% velocity.defl=100
     //% offset.defl=0
     //% throughWalls.defl=false
+    //% throughWalls.shadow=toggleOnOff
+    //% rotation.defl=true
+    //% rotation.shadow=toggleOnOff
     //% weight=96
-    export function shootProjectileAllAround(sprite: Sprite, count: number, image: Image, kind: number, velocity?: number, offset?: number, throughWalls?: boolean) {
+    export function shootProjectileAllAround(sprite: Sprite, count: number, image: Image, kind: number, velocity?: number, offset?: number, throughWalls?: boolean, rotation?: boolean) {
         if (!sprite) return
 
         for (let i = 0; i < count; i++) {
-            const angle = (2 * Math.PI) / count * i + (count % 2 === 0 ? 0 : -Math.PI * 0.5)
+            const angleDeg = 360 / count * i + (count % 2 === 0 ? 0 : -90)
+            const angle = angleDeg * Math.PI / 180
             const offsetX = offset * Math.cos(angle)
             const vx = velocity * Math.cos(angle)
             const offsetY = offset * Math.sin(angle)
@@ -506,6 +510,7 @@ namespace dungeon_pack {
             const projectile = sprites.create(image, kind)
             projectile.setPosition(sprite.x + offsetX, sprite.y + offsetY)
             projectile.setVelocity(vx, vy)
+            if (rotation) transformSprites.rotateSprite(projectile, angleDeg)
             projectile.setFlag(SpriteFlag.GhostThroughWalls, throughWalls)
             projectile.setFlag(SpriteFlag.DestroyOnWall, !throughWalls)
         }
