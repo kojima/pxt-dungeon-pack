@@ -546,6 +546,15 @@ namespace dungeon_pack {
     }
 
     /**
+     * 2スプライト間の距離を取得する
+     */
+    //% block="%sprite1=variables_get(mySprite) と%sprite2=variables_get(mySprite2) の間の距離"
+    //% weight=90
+    export function distanceBetween(sprite1: Sprite, sprite2: Sprite): number {
+        return Math.sqrt((sprite1.x - sprite2.x) ** 2 + (sprite1.y - sprite2.y) ** 2);
+    }
+
+    /**
      * HPステータスバーをスプライトに設定する
      */
     //% block="HPステータスバーをスプライト%sprite=variables_get(mySprite) に設定する || (幅: %width , 高さ: %height, オフセット: %offset)"
