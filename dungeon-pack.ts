@@ -520,6 +520,7 @@ namespace dungeon_pack {
             if (rotation) transformSprites.rotateSprite(projectile, angleDeg)
             projectile.setFlag(SpriteFlag.GhostThroughWalls, throughWalls)
             projectile.setFlag(SpriteFlag.DestroyOnWall, !throughWalls)
+            projectile.setFlag(SpriteFlag.AutoDestroy, true);
         }
     }
 
@@ -552,6 +553,22 @@ namespace dungeon_pack {
     //% weight=90
     export function distanceBetween(sprite1: Sprite, sprite2: Sprite): number {
         return Math.sqrt((sprite1.x - sprite2.x) ** 2 + (sprite1.y - sprite2.y) ** 2);
+    }
+
+    /**
+     * スプライトが他のスプライトを追跡しているか確認する
+     */
+    //% block="%following=variables_get(myEnemy) が%followed=variables_get(mySprite) を追跡している"
+    //% weight=85
+    export function isFollowingSprite(following: Sprite, followed: Sprite): boolean {
+        const sc = game.currentScene();
+        if (!sc.followingSprites) return false;
+        let isFollowing = false;
+        sc.followingSprites.forEach(fs => {
+            const { target, self, turnRate, rate } = fs;
+            if (self === following && target === followed) isFollowing = true;
+        });
+        return isFollowing;
     }
 
     /**
