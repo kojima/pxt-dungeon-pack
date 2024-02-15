@@ -555,6 +555,45 @@ namespace dungeon_pack {
         return Math.sqrt((sprite1.x - sprite2.x) ** 2 + (sprite1.y - sprite2.y) ** 2);
     }
 
+    function _existsWallsBetween(scene: scene.Scene, x1: number, y1: number, x2: number, y2: number): boolean {
+        const diffX = x2 - x1;
+        const diffY = y2 - y1;
+        if (Math.abs(diffX) > 240 || Math.abs(diffY) > 240) return false;
+        const dist = Math.sqrt(diffX ** 2 + diffY ** 2);
+        const step = dist / scene.tileMap.scale * 0.5;
+        const angle = Math.atan(diffY / diffX) + (diffX < 0 ? Math.PI : 0);
+        for (let d = 0; d < dist; d += step) {
+            const x = x1 + d * Math.cos(angle);
+            const y = y1 + d * Math.sin(angle);
+            const loc = tiles.getTileLocation(x >> scene.tileMap.scale, y >> scene.tileMap.scale);
+            if (tiles.tileAtLocationIsWall(loc)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * 2スプライト間に壁が存在するか確認する
+     */
+    //% block="%sprite1=variables_get(mySprite) と%sprite2=variables_get(mySprite2) の間に壁が存在する || 画面外もチェックする %checkOutOfScreen"
+    //% checkOutOfScreen.defl=false
+    //% checkOutOfScreen.shadow=toggleOnOff
+    //% expandableArgumentMode="toggle"
+    //% inlineInputMode=inline
+    //% weight=85
+    export function existWallsBetween(sprite1: Sprite, sprite2: Sprite, checkOutOfScreen?: boolean): boolean {
+        const scene = game.currentScene();
+        if (!scene.tileMap) return true;
+        if (!checkOutOfScreen && (sprite1.isOutOfScreen(scene.camera) || sprite2.isOutOfScreen(scene.camera))) return true;
+        const sprite1HInset = sprite1.width * 0.2;
+        const sprite1VInset = sprite1.height * 0.2;
+        const sprite2HInset = sprite2.width * 0.2;
+        const sprite2VInset = sprite2.height * 0.2;
+        return _existsWallsBetween(scene, sprite1.left + sprite1HInset, sprite1.top + sprite1VInset, sprite2.left + sprite2HInset, sprite2.top + sprite2VInset) ||
+            _existsWallsBetween(scene, sprite1.right - sprite1HInset, sprite1.top + sprite1VInset, sprite2.right - sprite2HInset, sprite2.top + sprite2VInset) ||
+            _existsWallsBetween(scene, sprite1.right - sprite1HInset, sprite1.bottom - sprite1VInset, sprite2.right - sprite2HInset, sprite2.bottom - sprite2VInset) ||
+            _existsWallsBetween(scene, sprite1.left + sprite1HInset, sprite1.bottom - sprite1VInset, sprite2.left + sprite2HInset, sprite2.bottom - sprite2VInset);
+    }
+
     /**
      * スプライトが他のスプライトを追跡しているか確認する
      */
@@ -566,10 +605,41 @@ namespace dungeon_pack {
         let isFollowing = false;
         sc.followingSprites.forEach(fs => {
             const { target, self, turnRate, rate } = fs;
-            if (self === following && target === followed) isFollowing = true;
+            if (self.id === following.id && target.id === followed.id) isFollowing = true;
         });
         return isFollowing;
     }
+
+
+    /**
+     * スプライトを追跡を停止する
+     */
+    //% block="%following=variables_get(myEnemy) の追跡を終了する || 動き続ける %keepMoving"
+    //% keepMoving.defl=true
+    //% keepMoving.shadow=toggleOnOff
+    //% expandableArgumentMode="toggle"
+    //% inlineInputMode=inline
+    //% weight=80
+    export function stopFollowing(sprite: Sprite, keepMoving?: boolean) {
+        const sc = game.currentScene();
+        if (!sc.followingSprites) return;
+
+        const fs = sc.followingSprites.find(fs => fs.self.id == sprite.id);
+        if (!fs) return;
+
+        const speed = fs.rate;
+        let vx = keepMoving ? fs.self.vx : 0;
+        let vy = keepMoving ? fs.self.vy : 0;
+        if (keepMoving && (vx ** 2 + vy ** 2) < speed ** 2 * 0.5) {
+            const angle = 2 * Math.PI * Math.random();
+            vx = speed * Math.cos(angle);
+            vy = speed * Math.sin(angle);
+        }
+        sprite.vx = vx;
+        sprite.vy = vy;
+        sc.followingSprites.removeElement(fs);
+    }
+
 
     /**
      * HPステータスバーをスプライトに設定する
