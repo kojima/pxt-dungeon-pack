@@ -524,17 +524,39 @@ namespace dungeon_pack {
         }
     }
 
+    /*
+     * スプライトを点滅させる 
+     */
+    //% block="スプライト %sprite を %t ミリ秒間点滅させる||点滅間隔 %interval"
+    //% sprite.shadow=variables_get
+    //% sprite.defl=mySprite
+    //% t.defl=1000
+    //% interval.defl=50
+    //% weight=95
+    export function blinkSprite(sprite: Sprite, t: number, interval?: number) {
+        let invisible = false;
+        const i = setInterval(() => {
+            invisible = !invisible;
+            sprite.setFlag(SpriteFlag.Invisible, invisible);
+        }, interval);
+        setTimeout(() => {
+            clearInterval(i);
+            sprite.setFlag(SpriteFlag.Invisible, false);
+        }, t);
+    }
+
     /**
      * タイル上にスプライトを生成する
      */
     //% block="スプライト%sprite=screen_image_picker (%kind=spritekind タイプ)をタイル%tile 上に生成する || (速度 vx:%vx , vy:%vy)"
+    //% kind.defl=Enemy
     //% tile.shadow=tileset_tile_picker
     //% tile.decompileIndirectFixedInstances=true
     //% expandableArgumentMode="toggle"
     //% inlineInputMode=inline
     //% vx.defl=0
     //% vy.defl=0
-    //% weight=95
+    //% weight=94
     export function spawnSpritesOnTiles(sprite: Image, kind: number, tile: Image, vx: number = 0, vy: number = 0) {
         tiles.getTilesByType(tile).forEach(tLoc => {
             const s = sprites.create(sprite, kind)
@@ -544,6 +566,22 @@ namespace dungeon_pack {
             s.setVelocity(vx, vy)
             s.setBounceOnWall(true)
         })
+    }
+
+    /**
+     * Create and run an image animation on sprites with specific kind
+     * @param frames the frames to animate through
+     * @param kind the kind to animate on
+     * @param frameInterval the time between changes, eg: 500
+     */
+    //% block="アニメーションを設定する タイプ: %kind=spritekind フレーム %frames=animation_editor 間隔 (ms) %frameInterval=timePicker ループ %loop=toggleOnOff"
+    //% kind.defl=SpriteKind.Enemy
+    //% weight=93
+    export function runImageAnimation(kind: number, frames: Image[], frameInterval?: number, loop?: boolean) {
+        sprites.allOfKind(kind).forEach((sprite) => {
+            const anim = new animation.ImageAnimation(sprite, frames, frameInterval || 500, !!loop);
+            anim.init();
+        });
     }
 
     /**
